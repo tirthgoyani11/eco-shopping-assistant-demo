@@ -1,10 +1,4 @@
 {
-  "name": "eco-jinner-final-function",
-  "version": "5.0.0",
-  "description": "The final, reliable serverless backend for the Eco Jinner AI Analyst.",
-  "main": "gemini-proxy.js",
-  "license": "MIT",
-  "dependencies": {
-    "node-fetch": "^2.7.0"
-  }
+  "name": "eco-jinner-final-debug-function",
+  "version": "7.0.0"
 }
