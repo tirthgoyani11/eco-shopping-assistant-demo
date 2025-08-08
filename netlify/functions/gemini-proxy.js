@@ -59,7 +59,7 @@ exports.handler = async function(event) {
     const data = await response.json();
 
     // Return Gemini answer if present
-   if (
+ if (
   data.candidates &&
   data.candidates[0] &&
   data.candidates.content &&
@@ -67,21 +67,28 @@ exports.handler = async function(event) {
   data.candidates.content.parts &&
   data.candidates.content.parts.text
 ) {
-  // Return the Gemini answer in the "result" property
+  // Return the Gemini answer
   return withCORS({
     statusCode: 200,
     body: JSON.stringify({ result: data.candidates.content.parts.text })
   });
-} else if (data.error) {
-  // If Gemini sends an actual error message
+} else if (data.candidates && data.candidates.length > 0) {
+  // If candidates exist, but the main text is missing, pull anything text-like
+  const altText = JSON.stringify(data.candidates);
   return withCORS({
     statusCode: 200,
-    body: JSON.stringify({ error: data.error.message })
+    body: JSON.stringify({ result: "AI did not provide a direct answer, but here’s what it said: " + altText })
+  });
+} else if (data.error && data.error.message) {
+  // If Gemini sends an error, make it look like a human message
+  return withCORS({
+    statusCode: 200,
+    body: JSON.stringify({ result: "AI could not process this product. Message: " + data.error.message })
   });
 } else {
-  // Only return raw Gemini response if something is really broken
+  // Catch-all: always send a friendly default
   return withCORS({
     statusCode: 200,
-    body: JSON.stringify({ error: "Gemini backend failed: " + JSON.stringify(data) })
+    body: JSON.stringify({ result: "AI could not analyze this product, but you can try another name, spelling, or give more description!" })
   });
 }
