@@ -1,7 +1,13 @@
+You're right, sometimes copying from the formatted blocks can be tricky. I apologize for the trouble.
+
+Here is the complete, corrected code for your `gemini-proxy.js` file in a plain text block. This should be much easier to copy and paste.
+
+This is the version that uses the stable `gemini-1.5-flash-preview-0514` model, which should fix the `403` error.
+
+````javascript
 const axios = require("axios");
 
 // --- The Image Scout Function ---
-// This uses the Serper API to get real, live Google Image search results.
 async function getGoogleImage(keyword, apiKey) {
     try {
         const response = await axios.post('https://google.serper.dev/images', {
@@ -10,7 +16,6 @@ async function getGoogleImage(keyword, apiKey) {
         }, {
             headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' }
         });
-        // Find the first high-quality image URL
         const firstImage = response.data.images.find(img => img.imageUrl);
         return firstImage ? firstImage.imageUrl : "https://placehold.co/400x400/2c5364/e5e7eb?text=Image+Not+Found";
     } catch (error) {
@@ -51,11 +56,12 @@ exports.handler = async function(event) {
             Title: ${title}
         `;
 
+        // Using a specific, stable Flash model version.
         const geminiAnalystResponse = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${GEMINI_KEY}`,
             { contents: [{ parts: [{ text: analystPrompt }] }] }
         );
-        const analystResult = JSON.parse(geminiAnalystResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim());
+        const analystResult = JSON.parse(geminiAnalystResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```g, "").trim());
 
         // --- Step 2: The Image Scouts (Parallel, Fast Search) ---
         const productScoutPromise = getGoogleImage(analystResult.productName, SERPER_KEY);
@@ -82,11 +88,12 @@ exports.handler = async function(event) {
             ${JSON.stringify(analystResult.scoutKeywords)}
         `;
 
+        // Using the same stable Flash model version here as well.
         const geminiDecoratorResponse = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${GEMINI_KEY}`,
             { contents: [{ parts: [{ text: decoratorPrompt }] }] }
         );
-        const decoratedItems = JSON.parse(geminiDecoratorResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim()).items;
+        const decoratedItems = JSON.parse(geminiDecoratorResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```g, "").trim()).items;
         
         // Combine the decorated text with the reliable images
         const finalItems = decoratedItems.map((item, index) => ({
@@ -115,3 +122,4 @@ exports.handler = async function(event) {
         return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + (e.response ? (e.response.data.error ? e.response.data.error.message : JSON.stringify(e.response.data)) : e.message) }) };
     }
 };
+````
