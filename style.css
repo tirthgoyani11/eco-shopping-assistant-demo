@@ -1,5 +1,5 @@
 /* =================================================================
-   Eco Jinner - Definitive Stylesheet (v5)
+   Eco Jinner - Definitive Stylesheet (v7 - Multi-Page)
    ================================================================= */
 
 /* --- 1. CSS Variables & Global Setup --- */
@@ -7,7 +7,7 @@
     --accent-primary: #10b981;
     --accent-secondary: #34d399;
     --bg-color: #020617;
-    --glass-bg: rgba(15, 23, 42, 0.5); /* slate-900 with opacity */
+    --glass-bg: rgba(15, 23, 42, 0.6); /* Slightly more opaque for header */
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
@@ -40,10 +40,51 @@ body {
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
-    transition: background 0.3s, border 0.3s, box-shadow 0.3s;
 }
 
-/* --- 3. Component Styles --- */
+/* --- 3. Navigation & Header --- */
+.nav-link {
+    position: relative;
+    padding: 8px 0;
+    font-weight: 500;
+}
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--accent-secondary);
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.25s ease-out;
+}
+.nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+.nav-link.active-link {
+    color: white;
+}
+.nav-link.active-link::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+.control-btn {
+    padding: 0.5rem; /* 8px */
+    border-radius: 9999px; /* rounded-full */
+    transition: all 0.2s;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+.control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-secondary);
+}
+
+
+/* --- 4. Component Styles --- */
 .command-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.4); border-color: var(--accent-secondary); }
 .command-input { background: transparent; border: none; outline: none; color: white; width: 100%; }
@@ -67,7 +108,7 @@ body {
     object-fit: cover;
 }
 
-/* --- 4. Gen-Z Loading Animation --- */
+/* --- 5. Gen-Z Loading Animation --- */
 .loader-container {
     display: flex;
     justify-content: center;
@@ -124,7 +165,7 @@ body {
     100% { clip: rect(1px, 9999px, 48px, 0); }
 }
 
-/* --- 5. Staggered Result Animation --- */
+/* --- 6. Staggered Result Animation --- */
 .reveal {
     opacity: 0;
     transform: translateY(30px);
@@ -135,8 +176,8 @@ body {
     transform: translateY(0);
 }
 
-/* --- 6. Panels & Modals --- */
-#history-panel, #settings-modal, #settings-modal-overlay {
+/* --- 7. Panels & Modals --- */
+#history-panel, #confirm-modal, #confirm-modal-overlay {
     transition: all 0.3s ease-in-out;
 }
 .history-item {
@@ -149,19 +190,7 @@ body {
     backdrop-filter: blur(4px);
 }
 
-/* --- 7. Notification Modal --- */
+/* --- 8. Notification Modal --- */
 #notification-modal {
     transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-/* --- 8. Form elements in Modal --- */
-.form-input {
-    background-color: rgba(0,0,0,0.2);
-    border: 1px solid var(--glass-border);
-    transition: border-color 0.3s, box-shadow 0.3s;
-}
-.form-input:focus {
-    outline: none;
-    border-color: var(--accent-secondary);
-    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.4);
 }
