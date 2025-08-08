@@ -253,55 +253,33 @@
         let typingTimeout;
         const typewriterEffect = (text, element) => {
             clearTimeout(typingTimeout);
-            let i = 0;
             const speed = 10; // milliseconds
             const parsedText = marked.parse(text);
             element.innerHTML = ''; // Clear previous content
             
-            // Temporary div to parse HTML and extract text nodes
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = parsedText;
             
-            const fullText = tempDiv.innerText;
-            element.innerHTML = parsedText; // Set final HTML
+            element.innerHTML = parsedText;
             
-            // This is a visual trick: we reveal the final HTML character by character
-            const allNodes = Array.from(element.getElementsByTagName('*'));
+            const allNodes = Array.from(element.querySelectorAll('p, li, h1, h2, h3'));
             allNodes.forEach(node => {
-                if(node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
-                    node.dataset.originalText = node.textContent;
-                    node.textContent = '';
-                }
+                node.style.opacity = '0';
             });
 
             let nodeIndex = 0;
-            let charIndex = 0;
-
-            function type() {
+            function revealNode() {
                 if (nodeIndex < allNodes.length) {
-                    const node = allNodes[nodeIndex];
-                    if (node.dataset.originalText) {
-                        if (charIndex < node.dataset.originalText.length) {
-                            node.textContent += node.dataset.originalText[charIndex];
-                            charIndex++;
-                            typingTimeout = setTimeout(type, speed);
-                            return;
-                        }
-                    }
-                    charIndex = 0;
+                    allNodes[nodeIndex].style.transition = 'opacity 0.3s';
+                    allNodes[nodeIndex].style.opacity = '1';
                     nodeIndex++;
-                    type();
-                } else {
-                     // Add blinking cursor at the end
-                    const cursor = document.createElement('span');
-                    cursor.className = 'typing-cursor';
-                    element.appendChild(cursor);
+                    typingTimeout = setTimeout(revealNode, 100); // Reveal next node after a delay
                 }
             }
-            type();
+            revealNode();
         };
 
-        // --- Main Analysis Logic ---
+        // --- Main Analysis Logic (IMPROVED WITH ROBUST ERROR HANDLING) ---
         const analyzeProduct = async () => {
             const title = prodTitleInput.value.trim();
             const desc = prodDescInput.value.trim();
@@ -326,19 +304,31 @@
                     body: JSON.stringify({ title, description: desc }),
                 });
 
-                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status} ${response.statusText || '(Internal Server Error)'}`);
+                }
 
                 const data = await response.json();
-                const raw = JSON.parse(data.result);
-                const textPart = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
-                const geminiError = raw?.error?.message;
-
-                if (geminiError) throw new Error(`AI Error: ${geminiError}`);
-                if (!textPart) throw new Error("AI did not return a valid response.");
                 
-                typewriterEffect(textPart, resultDiv);
-                saveHistory(query, textPart);
-                copyBtn.classList.remove('hidden');
+                if (data && typeof data.result === 'string' && data.result.trim() !== '') {
+                    const raw = JSON.parse(data.result);
+                    const textPart = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const geminiError = raw?.error?.message;
+
+                    if (geminiError) {
+                        throw new Error(`AI Error: ${geminiError}`);
+                    }
+                    if (!textPart) {
+                        throw new Error("AI did not return a valid response.");
+                    }
+                    
+                    typewriterEffect(textPart, resultDiv);
+                    saveHistory(query, textPart);
+                    copyBtn.classList.remove('hidden');
+
+                } else {
+                    throw new Error("Received an invalid or empty response from the server.");
+                }
 
             } catch (e) {
                 resultDiv.innerHTML = `<p class="text-red-400"><strong>Request Failed:</strong> ${e.message}</p>`;
