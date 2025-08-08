@@ -20,6 +20,8 @@ document.getElementById('analyze-btn').onclick = async function () {
       let answer = data.result;
       try {
         const raw = JSON.parse(data.result);
+
+        // Safely extract Gemini answer text
         if (
           raw.candidates &&
           Array.isArray(raw.candidates) &&
@@ -32,8 +34,9 @@ document.getElementById('analyze-btn').onclick = async function () {
           answer = raw.candidates.content.parts.text;
         }
       } catch (e) {
-        // leave answer as data.result on parse error
+        // If parsing fails, keep answer as raw result
       }
+
       document.getElementById('ai-result').innerText = answer;
     } else {
       document.getElementById('ai-result').innerText = "Unknown error from AI backend.";
