@@ -1,124 +1,383 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eco-Friendly Shopping Assistant</title>
-  <link rel="stylesheet" href="./style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Jinner - Futura Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base & Animated Background --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Glassmorphism Effect --- */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .dark .glass-effect {
+            background: rgba(23, 27, 39, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+             background: rgba(0, 0, 0, 0.4);
+        }
+        
+        /* --- Prose styles for AI result --- */
+        .prose h1, .prose h2, .prose h3 { color: inherit; }
+        .prose strong { color: inherit; }
+        .prose ul > li::before { background-color: #10b981; }
+        .dark .prose ul > li::before { background-color: #34d399; }
+        .prose a { color: #059669; }
+        .dark .prose a { color: #34d399; }
+        
+        /* --- Typing Cursor for AI Response --- */
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background-color: #10b981;
+            animation: blink 1s step-end infinite;
+            margin-left: 4px;
+            vertical-align: bottom;
+        }
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: #10b981; }
+        }
+    </style>
 </head>
-<body>
-  <header>
-    <h1>Eco-Friendly Shopping Assistant 🌱</h1>
-    <p>Find and choose eco-friendly products effortlessly.</p>
-  </header>
-  <!-- AI-Powered Eco Checker Section -->
-  <section id="eco-checker" class="eco-checker-section" aria-label="AI Eco Checker">
-    <div class="eco-checker-container">
-      <h2>🤖 AI Eco Checker</h2>
-      <p>Get instant sustainability insights for any product or ingredient</p>
-      <div class="checker-input-group">
-        <!-- Input for Product Title -->
-        <input
-          type="text"
-          id="prod-title"
-          class="eco-input"
-          placeholder="Enter product name or ingredient..."
-          aria-describedby="eco-input-help"
-        >
-        <!-- Input for Description (optional, can remove if not needed) -->
-        <input
-          type="text"
-          id="prod-desc"
-          class="eco-input"
-          placeholder="Enter product description (optional)..."
-          aria-describedby="eco-input-help"
-        >
-        <!-- Button to trigger Gemini AI checker -->
-        <button
-          type="button"
-          id="analyze-btn"
-          class="check-eco-btn"
-          aria-label="Check eco-friendliness"
-        >
-          <span aria-hidden="true">🔍</span>
-          <span class="btn-text">Check</span>
-        </button>
-      </div>
-      <div id="eco-input-help" class="input-help">
-        Try searching for "cotton", "plastic bottle", or any product name
-      </div>
-      <div id="eco-loading-spinner" style="display:none;"><div class="spinner"></div><span>Analyzing eco-friendliness...</span></div>
-      <div id="ai-result" class="eco-results" aria-live="polite"></div>
+<body class="text-gray-800 dark:text-gray-200 antialiased">
+
+    <div class="container mx-auto p-4 md:p-6 min-h-screen">
+
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Eco Jinner</h1>
+            <button id="theme-toggle" class="p-2 rounded-full glass-effect text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 transition-colors">
+                <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Input & History -->
+            <div class="flex flex-col gap-6">
+                <!-- Input Section -->
+                <div class="glass-effect p-6 rounded-2xl">
+                    <div class="mb-4">
+                        <label for="prod-title" class="block text-sm font-medium text-white/80 mb-1">Product Title</label>
+                        <input type="text" id="prod-title" class="w-full p-3 bg-white/20 dark:bg-black/20 text-white placeholder-white/50 border-0 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:outline-none" placeholder="e.g., Organic Cotton T-Shirt">
+                    </div>
+                    <div class="mb-4">
+                        <label for="prod-desc" class="block text-sm font-medium text-white/80 mb-1">Product Description</label>
+                        <textarea id="prod-desc" rows="4" class="w-full p-3 bg-white/20 dark:bg-black/20 text-white placeholder-white/50 border-0 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:outline-none" placeholder="e.g., Made from 100% GOTS-certified cotton..."></textarea>
+                    </div>
+                     <div class="mb-5">
+                        <p class="text-sm font-medium text-white/80 mb-2">Or try an example:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="example-btn text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full transition">'Leather handbag'</button>
+                            <button class="example-btn text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full transition">'Plastic water bottle'</button>
+                            <button class="example-btn text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full transition">'Bamboo toothbrush'</button>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="analyze-btn" class="w-full flex justify-center items-center gap-2 bg-emerald-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 dark:focus:ring-offset-slate-900 disabled:bg-emerald-400/50 disabled:cursor-not-allowed transition-colors">
+                            <span id="analyze-btn-text">Analyze</span>
+                            <div id="btn-spinner" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></div>
+                        </button>
+                        <button id="clear-btn" class="p-3 bg-white/20 hover:bg-white/30 text-white rounded-lg transition" title="Clear Inputs">
+                           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div class="glass-effect p-6 rounded-2xl">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Analysis History</h2>
+                    <div id="history-list" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                        <!-- History items will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Result -->
+            <div id="result-container" class="glass-effect p-6 rounded-2xl min-h-[300px] lg:min-h-0 relative">
+                <div id="eco-loading-spinner" class="absolute inset-0 bg-black/10 backdrop-blur-sm flex justify-center items-center rounded-2xl hidden">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                </div>
+                <button id="copy-btn" class="absolute top-4 right-4 p-2 text-white/50 hover:text-white rounded-md hover:bg-white/20 transition-colors hidden" title="Copy Result">
+                    <svg id="copy-icon-default" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <svg id="copy-icon-success" class="w-5 h-5 text-emerald-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+                <div id="ai-result" class="prose prose-lg dark:prose-invert max-w-none text-white/90">
+                     <p class="text-white/60">Your AI analysis will appear here...</p>
+                </div>
+            </div>
+        </main>
     </div>
-  </section>
-  <main id="product-list">
-    <h2 class="section-title">Featured Eco Products</h2>
-    <!-- Example Eco Product Cards -->
-    <div class="product-card" data-product-id="1">
-      <img src="./assets/product1.jpg" alt="Eco Product 1" class="product-image">
-      <div class="product-info">
-        <h3 class="product-name">Bamboo Toothbrush Set</h3>
-        <p class="product-description">Biodegradable bamboo toothbrushes with soft bristles. Eco-friendly alternative to plastic toothbrushes.</p>
-        <div class="product-price">$12.99</div>
-        <button class="suggestion-btn" data-product="Bamboo Toothbrush Set" aria-label="Get eco suggestions for Bamboo Toothbrush Set">
-          <span aria-hidden="true">🌿</span>
-          Get Eco Suggestions
-        </button>
-      </div>
-    </div>
-    <div class="product-card" data-product-id="2">
-      <img src="./assets/product2.jpg" alt="Eco Product 2" class="product-image">
-      <div class="product-info">
-        <h3 class="product-name">Reusable Water Bottle</h3>
-        <p class="product-description">Stainless steel insulated water bottle. Keeps drinks cold for 24hrs, hot for 12hrs. BPA-free.</p>
-        <div class="product-price">$24.99</div>
-        <button class="suggestion-btn" data-product="Reusable Water Bottle" aria-label="Get eco suggestions for Reusable Water Bottle">
-          <span aria-hidden="true">🌿</span>
-          Get Eco Suggestions
-        </button>
-      </div>
-    </div>
-    <div class="product-card" data-product-id="3">
-      <img src="./assets/product3.jpg" alt="Eco Product 3" class="product-image">
-      <div class="product-info">
-        <h3 class="product-name">Organic Cotton Tote Bag</h3>
-        <p class="product-description">100% organic cotton tote bag. Durable, washable, and perfect for grocery shopping. Reduces plastic waste.</p>
-        <div class="product-price">$15.99</div>
-        <button class="suggestion-btn" data-product="Organic Cotton Tote Bag" aria-label="Get eco suggestions for Organic Cotton Tote Bag">
-          <span aria-hidden="true">🌿</span>
-          Get Eco Suggestions
-        </button>
-      </div>
-    </div>
-  </main>
-  <!-- Accessible Popup (optional) -->
-  <div id="popup" class="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="popup-title">
-    <div class="popup-content">
-      <div class="popup-header">
-        <h3 id="popup-title">Eco Suggestions</h3>
-        <button class="popup-close" type="button" aria-label="Close suggestions popup">
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-      <div class="popup-body" id="popup-body">
-        <!-- Dynamic content will be loaded here -->
-      </div>
-      <div class="popup-actions">
-        <button id="save-suggestion" class="btn-secondary" type="button">Save for Later</button>
-        <button id="learn-more" class="btn-primary" type="button">Learn More</button>
-      </div>
-    </div>
-  </div>
-  <!-- Loading indicator (optional) -->
-  <div id="loading-indicator" class="loading-indicator" aria-hidden="true">
-    <div class="spinner"></div>
-    Analyzing eco-friendliness...
-  </div>
-  <footer>
-    © 2025 Eco Assistant — Hackathon Demo
-  </footer>
-  <!-- Make sure this is last in body -->
-  <script src="./app.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Element References ---
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const analyzeBtnText = document.getElementById('analyze-btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const clearBtn = document.getElementById('clear-btn');
+        const prodTitleInput = document.getElementById('prod-title');
+        const prodDescInput = document.getElementById('prod-desc');
+        const mainSpinner = document.getElementById('eco-loading-spinner');
+        const resultDiv = document.getElementById('ai-result');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyIconDefault = document.getElementById('copy-icon-default');
+        const copyIconSuccess = document.getElementById('copy-icon-success');
+        const historyList = document.getElementById('history-list');
+        const exampleBtns = document.querySelectorAll('.example-btn');
+
+        // --- Theme Toggle ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const lightIcon = document.getElementById('theme-icon-light');
+        const darkIcon = document.getElementById('theme-icon-dark');
+
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
+            }
+        };
+        
+        const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        
+        // --- History Management ---
+        const HISTORY_KEY = 'ecoJinnerHistory';
+        const MAX_HISTORY = 5;
+        let analysisHistory = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+
+        const saveHistory = (query, result) => {
+            analysisHistory.unshift({ query, result, date: new Date().toISOString() });
+            if (analysisHistory.length > MAX_HISTORY) {
+                analysisHistory.pop();
+            }
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(analysisHistory));
+            renderHistory();
+        };
+
+        const renderHistory = () => {
+            historyList.innerHTML = '';
+            if (analysisHistory.length === 0) {
+                historyList.innerHTML = `<p class="text-white/50 text-sm">No history yet. Your analyses will be saved here.</p>`;
+                return;
+            }
+            analysisHistory.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'bg-white/10 p-3 rounded-lg flex justify-between items-center';
+                const itemDate = new Date(item.date).toLocaleString();
+                
+                historyItem.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-emerald-300">${item.query}</p>
+                        <p class="text-xs text-white/50">${itemDate}</p>
+                    </div>
+                    <div class="flex gap-1">
+                        <button class="history-view-btn p-2 rounded-md hover:bg-white/20 text-white/70 hover:text-white" data-index="${index}" title="View Result">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                        <button class="history-delete-btn p-2 rounded-md hover:bg-red-500/20 text-red-400/70 hover:text-red-400" data-index="${index}" title="Delete">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        };
+
+        historyList.addEventListener('click', (e) => {
+            const viewBtn = e.target.closest('.history-view-btn');
+            const deleteBtn = e.target.closest('.history-delete-btn');
+
+            if (viewBtn) {
+                const index = viewBtn.dataset.index;
+                const item = analysisHistory[index];
+                typewriterEffect(item.result, resultDiv);
+                copyBtn.classList.remove('hidden');
+            }
+
+            if (deleteBtn) {
+                const index = deleteBtn.dataset.index;
+                analysisHistory.splice(index, 1);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(analysisHistory));
+                renderHistory();
+            }
+        });
+        
+        // --- Typewriter Effect ---
+        let typingTimeout;
+        const typewriterEffect = (text, element) => {
+            clearTimeout(typingTimeout);
+            let i = 0;
+            const speed = 10; // milliseconds
+            const parsedText = marked.parse(text);
+            element.innerHTML = ''; // Clear previous content
+            
+            // Temporary div to parse HTML and extract text nodes
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = parsedText;
+            
+            const fullText = tempDiv.innerText;
+            element.innerHTML = parsedText; // Set final HTML
+            
+            // This is a visual trick: we reveal the final HTML character by character
+            const allNodes = Array.from(element.getElementsByTagName('*'));
+            allNodes.forEach(node => {
+                if(node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
+                    node.dataset.originalText = node.textContent;
+                    node.textContent = '';
+                }
+            });
+
+            let nodeIndex = 0;
+            let charIndex = 0;
+
+            function type() {
+                if (nodeIndex < allNodes.length) {
+                    const node = allNodes[nodeIndex];
+                    if (node.dataset.originalText) {
+                        if (charIndex < node.dataset.originalText.length) {
+                            node.textContent += node.dataset.originalText[charIndex];
+                            charIndex++;
+                            typingTimeout = setTimeout(type, speed);
+                            return;
+                        }
+                    }
+                    charIndex = 0;
+                    nodeIndex++;
+                    type();
+                } else {
+                     // Add blinking cursor at the end
+                    const cursor = document.createElement('span');
+                    cursor.className = 'typing-cursor';
+                    element.appendChild(cursor);
+                }
+            }
+            type();
+        };
+
+        // --- Main Analysis Logic ---
+        const analyzeProduct = async () => {
+            const title = prodTitleInput.value.trim();
+            const desc = prodDescInput.value.trim();
+            const query = title || desc;
+
+            if (!query) {
+                resultDiv.innerHTML = `<p class="text-red-400">Please enter a product title or description.</p>`;
+                return;
+            }
+
+            analyzeBtn.disabled = true;
+            analyzeBtnText.textContent = '';
+            btnSpinner.classList.remove('hidden');
+            mainSpinner.style.display = 'flex';
+            resultDiv.innerHTML = '';
+            copyBtn.classList.add('hidden');
+
+            try {
+                const response = await fetch('https://ecojinner.netlify.app/.netlify/functions/gemini-proxy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description: desc }),
+                });
+
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+                const data = await response.json();
+                const raw = JSON.parse(data.result);
+                const textPart = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const geminiError = raw?.error?.message;
+
+                if (geminiError) throw new Error(`AI Error: ${geminiError}`);
+                if (!textPart) throw new Error("AI did not return a valid response.");
+                
+                typewriterEffect(textPart, resultDiv);
+                saveHistory(query, textPart);
+                copyBtn.classList.remove('hidden');
+
+            } catch (e) {
+                resultDiv.innerHTML = `<p class="text-red-400"><strong>Request Failed:</strong> ${e.message}</p>`;
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtnText.textContent = 'Analyze';
+                btnSpinner.classList.add('hidden');
+                mainSpinner.style.display = 'none';
+            }
+        };
+
+        analyzeBtn.addEventListener('click', analyzeProduct);
+        
+        clearBtn.addEventListener('click', () => {
+            prodTitleInput.value = '';
+            prodDescInput.value = '';
+        });
+        
+        exampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                prodTitleInput.value = btn.textContent.replace(/'/g, '');
+                prodDescInput.value = '';
+                analyzeProduct();
+            });
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(resultDiv.innerText).then(() => {
+                copyIconDefault.classList.add('hidden');
+                copyIconSuccess.classList.remove('hidden');
+                setTimeout(() => {
+                    copyIconDefault.classList.remove('hidden');
+                    copyIconSuccess.classList.add('hidden');
+                }, 2000);
+            });
+        });
+        
+        renderHistory();
+    });
+    </script>
 </body>
 </html>
