@@ -16,26 +16,32 @@ document.getElementById('analyze-btn').onclick = async function () {
     });
     const data = await response.json();
 
+    let answer = "";
     if (data.result) {
-     let answer = "";
-try {
-  const raw = JSON.parse(data.result);
-  if (
-    raw.candidates &&
-    Array.isArray(raw.candidates) &&
-    raw.candidates &&
-    raw.candidates.content &&
-    Array.isArray(raw.candidates.content.parts) &&
-    raw.candidates.content.parts &&
-    typeof raw.candidates.content.parts.text === "string"
-  ) {
-    // This is the ONLY AI answer we want to display!
-    answer = raw.candidates.content.parts.text;
-  } else {
-    answer = "Sorry, I couldn't extract a Gemini answer.";
+      try {
+        const raw = JSON.parse(data.result);
+        if (
+          raw.candidates &&
+          Array.isArray(raw.candidates) &&
+          raw.candidates[0] &&
+          raw.candidates.content &&
+          Array.isArray(raw.candidates.content.parts) &&
+          raw.candidates.content.parts &&
+          typeof raw.candidates.content.parts.text === "string"
+        ) {
+          answer = raw.candidates.content.parts.text;
+        } else {
+          answer = "Sorry, I couldn't extract a Gemini answer.";
+        }
+      } catch (e) {
+        answer = "Sorry, backend returned invalid data. Please try again!";
+      }
+    } else {
+      answer = "Unknown error from AI backend.";
+    }
+    // Render Markdown safely as HTML
+    document.getElementById('ai-result').innerHTML = marked.parse(answer);
+  } catch (e) {
+    document.getElementById('ai-result').innerHTML = "<span style='color: red;'>Fetch error: " + e.message + "</span>";
   }
-} catch (e) {
-  answer = "Sorry, backend returned invalid data. Please try again!";
-}
-// SAFELY convert markdown and display as HTML
-document.getElementById('ai-result').innerHTML = marked.parse(answer);
+};
