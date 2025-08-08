@@ -258,3 +258,6 @@ body {
     .learn-card { padding: 1rem; }
 }
 
+.learn-card { opacity: 0; transform: translateY(25px); transition: all .4s; }
+.learn-card.visible { opacity: 1; transform: none; }
+
