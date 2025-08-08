@@ -16,21 +16,22 @@ document.getElementById('analyze-btn').onclick = async function () {
     });
     const data = await response.json();
 
-    // Properly handle result from proxy function
     if (data.result) {
       try {
         const raw = JSON.parse(data.result);
         if (
           raw.candidates &&
+          Array.isArray(raw.candidates) &&
           raw.candidates[0] &&
           raw.candidates.content &&
           raw.candidates.content.parts &&
+          Array.isArray(raw.candidates.content.parts) &&
           raw.candidates.content.parts &&
           raw.candidates.content.parts.text
         ) {
           document.getElementById('ai-result').innerText = raw.candidates.content.parts.text;
         } else {
-          document.getElementById('ai-result').innerText = data.result; // fallback: raw JSON or diagnostic
+          document.getElementById('ai-result').innerText = data.result; // show raw JSON fallback
         }
       } catch (e) {
         document.getElementById('ai-result').innerText = data.result; // fallback on parse error
