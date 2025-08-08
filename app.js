@@ -66,53 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editorsPicksSection: document.getElementById('editors-picks-section'),
         editorsPicksGrid: document.getElementById('editors-picks-grid'),
         discoverGrid: document.getElementById('discover-grid'),
-        
     };
-// --- Learn Hub Dynamic Search ---
-const learnSearchInput = document.querySelector('#learn-hub .learn-search-bar');
-const learnCards = document.querySelectorAll('#learn-hub .learn-card');
-if (learnSearchInput && learnCards.length > 0) {
-  learnSearchInput.addEventListener('input', (e) => {
-    const val = e.target.value.toLowerCase();
-    learnCards.forEach(card => {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(val) ? '' : 'none';
-    });
-  });
-}
-    // --- Learn Hub Category Filter ---
-const learnCategoryBtns = document.querySelectorAll('#learn-hub .category-btn');
-learnCategoryBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const cat = btn.textContent.trim().toLowerCase();
-    learnCategoryBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    learnCards.forEach(card => {
-      card.style.display =
-        cat === '🌱 sustainability' && card.textContent.toLowerCase().includes('eco')
-        || cat === '🥗 health & food' && card.textContent.toLowerCase().includes('food')
-        || cat === '👗 eco-fashion' && card.textContent.toLowerCase().includes('fashion')
-        || cat === '💄 clean beauty' && card.textContent.toLowerCase().includes('beauty')
-        || cat === '🌞 green tech' && card.textContent.toLowerCase().includes('tech')
-        || cat === 'all'
-        ? '' : 'none';
-    });
-  });
-});
-
-    // --- Learn Hub Expand/Collapse Read More ---
-document.querySelectorAll('#learn-hub .learn-readmore').forEach(link => {
-  link.addEventListener('click', function(e) {
-    e.preventDefault();
-    const parent = link.closest('.learn-card');
-    parent.classList.toggle('expanded');
-    // You could also load more article content from a server/API here!
-  });
-});
-/* Add in your CSS:
-.learn-card.expanded { max-height: none; background: #181f2b; transition: all 0.2s; }
-*/
-
 
     // --- 3. State Management ---
     let selectedCategory = 'eco';
