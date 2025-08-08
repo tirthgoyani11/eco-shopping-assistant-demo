@@ -21,41 +21,24 @@ exports.handler = async function(event) {
         const { title, description } = body;
 
         if (!title && !description) {
-            return { statusCode: 400, body: JSON.stringify({ error: "Please provide a product title or description." }) };
+            return { statusCode: 400, body: JSON.stringify({ error: "Input is missing." }) };
         }
 
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
         const prompt = `
-            You are "Eco Jinner Pro," a world-class sustainability analyst. Your task is to analyze the provided product information and return a structured JSON object.
+            You are "Eco Jinner Pro," a sustainability analyst. Analyze the following product and return a structured JSON object.
 
-            **Analysis Instructions:**
-            1.  **Overall Score:** Provide an "overallScore" from 0 to 100, where 100 is perfectly sustainable.
-            2.  **Category Scores:** Provide scores (0-100) for three categories: "materials", "manufacturing", and "endOfLife".
-            3.  **Verdict:** Provide a short, one-sentence "verdict" (e.g., "Excellent eco-friendly choice," "Poor environmental profile").
-            4.  **Summary:** Write a detailed "summary" (2-3 paragraphs) in Markdown explaining your reasoning.
-            5.  **Recommendations:**
-                * If the score is below 70, provide an "alternatives" array with objects containing a "name" and a real "link".
-                * If the score is 70 or above, provide a "shopping" array with objects containing a "name" and a real "link" to buy similar products.
-                * If applicable, provide a "diy" object with a "title" and a "steps" array for a DIY alternative.
-
-            **JSON Output Structure (MUST follow this exactly, no extra text or markdown formatting):**
+            **JSON Output Structure (MUST follow this exactly, no extra text):**
             \`\`\`json
             {
               "overallScore": 85,
-              "scores": {
-                "materials": 90,
-                "manufacturing": 80,
-                "endOfLife": 85
-              },
-              "verdict": "A solid, sustainable option for daily hydration.",
-              "summary": "This stainless steel water bottle is an excellent choice...",
+              "scores": { "materials": 90, "manufacturing": 80, "endOfLife": 85 },
+              "verdict": "A solid, sustainable option.",
+              "summary": "This product is a great choice because...",
               "recommendations": {
-                "shopping": [
-                  { "name": "Hydro Flask 24oz", "link": "https://www.amazon.com/..." },
-                  { "name": "Klean Kanteen Classic", "link": "https://www.kleankanteen.com/..." }
-                ]
+                "shopping": [ { "name": "Example Product", "link": "https://www.example.com" } ]
               }
             }
             \`\`\`
@@ -82,15 +65,30 @@ exports.handler = async function(event) {
 
         const data = await response.json();
         const rawText = data.candidates[0].content.parts[0].text;
-        
-        // Clean and parse the JSON from the AI's response
-        const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        return {
-            statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(jsonResponse) // Return the parsed JSON directly
-        };
+        // --- THIS IS THE NEW BULLETPROOF LOGIC ---
+        try {
+            // Attempt to parse the cleaned text as JSON
+            const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
+            // If successful, return the structured JSON
+            return {
+                statusCode: 200,
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify(jsonResponse)
+            };
+        } catch (parsingError) {
+            // If parsing fails, DO NOT CRASH.
+            console.error("JSON parsing failed. The AI likely returned malformed text.", parsingError);
+            // Return the raw text as a fallback so we can see what went wrong.
+            return {
+                statusCode: 200, // Still a success, because we got a response from the AI
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({
+                    isError: true,
+                    fallbackText: `The AI returned a response that could not be structured. Here is the raw text:\n\n---\n\n${rawText}`
+                })
+            };
+        }
 
     } catch (e) {
         console.error("Backend Error:", e);
