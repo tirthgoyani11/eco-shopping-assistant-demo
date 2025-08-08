@@ -329,3 +329,110 @@ footer {
     border: 2px solid var(--dark-text);
   }
 }
+/* AI Eco Checker Styles */
+#ai-analyze,
+.eco-ai-section {
+  background: #f0fdf4;
+  border: 1px solid #d1fae5;
+  border-radius: 1.2em;
+  max-width: 540px;
+  margin: 2.2em auto 1.8em auto;
+  padding: 1.7em 2em;
+  box-shadow: 0 4px 22px #10b98124;
+  text-align: center;
+}
+
+#ai-analyze h2, .eco-ai-section h2 {
+  margin-top: 5px;
+  font-size: 1.4em;
+  letter-spacing: 1.2px;
+  color: #059669;
+  font-weight: 700;
+}
+
+#ai-analyze input,
+.eco-ai-section input {
+  margin: 0.4em 0.3em;
+  padding: 0.65em 1em;
+  border-radius: 6px;
+  border: 1px solid #bec5c6;
+  max-width: 270px;
+  width: 85%;
+  font-size: 1em;
+  transition: box-shadow 0.17s;
+}
+
+#ai-analyze input:focus,
+.eco-ai-section input:focus {
+  border: 1.5px solid #10b981;
+  outline: none;
+  box-shadow: 0 0 8px #10b98133;
+}
+
+#analyze-btn,
+.eco-ai-section button {
+  padding: 0.7em 2.3em;
+  background: #059669;
+  color: #fff;
+  border: none;
+  font-size: 1.1em;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px #05966931;
+  cursor: pointer;
+  margin: 1em 0 0.7em 0;
+  transition: background 0.2s, transform 0.18s;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  display: inline-block;
+}
+
+#analyze-btn:hover,
+.eco-ai-section button:hover {
+  background: #10b981;
+  transform: scale(1.045);
+}
+
+#ai-result,
+.eco-ai-result {
+  color: #059669;
+  font-size: 1.11em;
+  background: #e6faf1;
+  border-radius: 0.7em;
+  padding: 0.8em 1em;
+  margin: 1.2em auto 0 auto;
+  min-height: 2.2em;
+  transition: background 0.3s;
+  word-break: break-word;
+  line-height: 1.45;
+  max-width: 420px;
+}
+
+/* Helper text & label styling for accessibility */
+.eco-helper,
+#eco-input-help {
+  font-size: 0.93em;
+  color: #4bbf91;
+  margin-top: 0.4em;
+  margin-bottom: 0.7em;
+  display: block;
+}
+
+/* Responsive improvements */
+@media (max-width: 600px) {
+  #ai-analyze,
+  .eco-ai-section {
+    padding: 1.2em 0.4em;
+    max-width: 99vw;
+  }
+  #ai-analyze input,
+  .eco-ai-section input {
+    max-width: 99vw;
+    margin: 0.5em auto;
+  }
+  #ai-result,
+  .eco-ai-result {
+    font-size: 0.97em;
+    max-width: 95vw;
+  }
+}
+
