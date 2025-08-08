@@ -1,7 +1,7 @@
 // This file centralizes all prompts sent to the AI.
 
 // Instructions for the first AI call (The Analyst)
-function getAnalystPrompt(category, title, description) {
+exports.getAnalystPrompt = function(category, title, description) {
     return `
         You are a senior product analyst. Analyze the user's product and create a research plan for your team of scouts.
 
@@ -26,7 +26,7 @@ function getAnalystPrompt(category, title, description) {
 }
 
 // Instructions for the second AI call (The Scout)
-function getScoutPrompt(keyword) {
+exports.getScoutPrompt = function(keyword) {
     return `
         You are an expert Indian market product scout. Your only mission is to find ONE single, top-rated product based on the keyword.
 
@@ -52,5 +52,3 @@ function getScoutPrompt(keyword) {
         Keyword: "${keyword}"
     `;
 }
-
-module.exports = { getAnalystPrompt, getScoutPrompt };
