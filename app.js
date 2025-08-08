@@ -27,7 +27,7 @@ document.getElementById('analyze-btn').onclick = async function () {
           raw.candidates.content.parts &&
           Array.isArray(raw.candidates.content.parts) &&
           raw.candidates.content.parts &&
-          raw.candidates.content.parts.text
+          typeof raw.candidates.content.parts.text === "string"
         ) {
           document.getElementById('ai-result').innerText = raw.candidates.content.parts.text;
         } else {
