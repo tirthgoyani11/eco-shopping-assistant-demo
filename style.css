@@ -1,5 +1,5 @@
 /* =================================================================
-   Eco Jinner - Final Design System (style.css)
+   Eco Jinner - The Definitive Design System (style.css)
    ================================================================= */
 
 /* --- 1. CSS Variables & Global Setup --- */
@@ -10,16 +10,13 @@
     --accent-primary: #10b981; /* emerald-500 */
     --accent-primary-hover: #059669; /* emerald-600 */
     --accent-secondary: #34d399; /* emerald-400 */
-    --accent-danger: #ef4444; /* red-500 */
 
     /* Text Colors */
     --text-light: #e5e7eb; /* gray-200 */
     --text-muted-light: #9ca3af; /* gray-400 */
     
     /* Background & Glass Effect */
-    --bg-gradient-start: #0f2027;
-    --bg-gradient-mid: #203a43;
-    --bg-gradient-end: #2c5364;
+    --bg-color: #020617; /* slate-950 */
     --glass-bg: rgba(30, 41, 59, 0.4); /* slate-800 with opacity */
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -31,104 +28,130 @@ html {
 }
 
 body {
-    background: linear-gradient(-45deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
-    background-size: 400% 400%;
-    animation: gradientBG 20s ease infinite;
+    background-color: var(--bg-color);
     color: var(--text-light);
-    overflow-x: hidden;
+    overflow: hidden; /* Prevents scrollbars from the aurora */
 }
 
-/* --- 2. Animations --- */
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+/* --- 2. Dynamic Aurora Background --- */
+.aurora-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
-@keyframes pulse {
-    50% { opacity: .5; }
+.aurora {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.2;
 }
+
+.aurora-1 {
+    width: 600px;
+    height: 600px;
+    background: #38bdf8; /* sky-500 */
+    animation: aurora-anim-1 20s infinite alternate;
+}
+
+.aurora-2 {
+    width: 500px;
+    height: 500px;
+    background: #818cf8; /* indigo-400 */
+    animation: aurora-anim-2 25s infinite alternate-reverse;
+}
+
+.aurora-3 {
+    width: 400px;
+    height: 400px;
+    background: var(--accent-primary);
+    animation: aurora-anim-3 30s infinite alternate;
+}
+
+@keyframes aurora-anim-1 {
+    0% { transform: translate(10vw, 10vh) scale(1); }
+    100% { transform: translate(40vw, 60vh) scale(1.2); }
+}
+@keyframes aurora-anim-2 {
+    0% { transform: translate(80vw, 20vh) scale(1); }
+    100% { transform: translate(20vw, 80vh) scale(0.8); }
+}
+@keyframes aurora-anim-3 {
+    0% { transform: translate(50vw, 90vh) scale(0.9); }
+    100% { transform: translate(10vw, 10vh) scale(1.1); }
+}
+
 
 /* --- 3. Core Layout & Glassmorphism --- */
-.glass-effect {
+.glass-ui {
     background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
-    border-radius: 1rem; /* rounded-2xl */
-    padding: 1.5rem; /* p-6 */
     transition: background 0.3s, border 0.3s, box-shadow 0.3s;
 }
 
 /* --- 4. Component Styles --- */
 
-/* Buttons */
-.btn {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    font-weight: 700;
-    border-radius: 0.5rem; /* rounded-lg */
-    transition: background-color 0.2s, transform 0.15s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-    border: none;
+/* Command Bar */
+.command-bar {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn-primary {
-    background-color: var(--accent-primary);
+.command-bar:focus-within {
+    box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.5);
+    border-color: var(--accent-secondary);
+}
+
+.command-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    width: 100%;
+    font-size: 1.125rem; /* text-lg */
+}
+
+/* Category Buttons */
+.category-btn {
+    border: 1px solid transparent; /* Start with a transparent border */
+}
+
+.category-btn.active {
+    background: rgba(16, 185, 129, 0.3); /* emerald-500 with opacity */
+    border-color: var(--accent-secondary);
     color: white;
 }
 
-.btn-primary:hover {
-    background-color: var(--accent-primary-hover);
+/* Main Analyze Button */
+.analyze-button {
+    transition: background-color 0.2s, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.analyze-button:hover {
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-    transform: translateY(-2px);
+    transform: scale(1.05);
 }
 
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.btn-primary:disabled {
-    background-color: rgba(16, 185, 129, 0.4);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-/* Inputs & Selects */
-.form-input {
-    width: 100%;
-    padding: 0.75rem;
-    background: rgba(0, 0, 0, 0.2);
-    color: var(--text-light);
-    border: 1px solid transparent;
-    border-radius: 0.5rem;
-    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-input::placeholder {
-    color: var(--text-muted-light);
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: var(--accent-secondary);
-    background: rgba(0, 0, 0, 0.3);
-    box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+.analyze-button:active {
+    transform: scale(1);
 }
 
 /* Recommendation Cards */
 .recommendation-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    border: 1px solid var(--glass-border);
 }
 
 .recommendation-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border-color: var(--accent-secondary);
 }
 
 .recommendation-card img {
@@ -136,7 +159,28 @@ body {
     object-fit: cover;
 }
 
-/* AI-Generated Content (Prose) */
+/* --- 5. Animations & Transitions --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Loading Skeleton */
+.loading-skeleton {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    50% { opacity: .5; }
+}
+
+/* --- 6. Prose & Custom Scrollbar --- */
 .prose a {
     color: var(--accent-secondary);
     text-decoration: none;
@@ -152,12 +196,6 @@ body {
     color: inherit;
 }
 
-/* Loading Skeleton */
-.loading-skeleton {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* --- 5. Custom Scrollbar --- */
 ::-webkit-scrollbar {
     width: 10px;
 }
