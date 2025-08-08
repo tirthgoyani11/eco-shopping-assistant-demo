@@ -30,7 +30,9 @@ html {
 body {
     background-color: var(--bg-color);
     color: var(--text-light);
-    overflow: hidden; /* Prevents scrollbars from the aurora */
+    /* --- THIS IS THE FIX --- */
+    /* Changed 'overflow: hidden' to 'overflow-x: hidden' to allow vertical scrolling */
+    overflow-x: hidden; 
 }
 
 /* --- 2. Dynamic Aurora Background --- */
