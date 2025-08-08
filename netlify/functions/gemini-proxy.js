@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 
 exports.handler = async function(event) {
+    // Standard pre-flight check for browser compatibility
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
@@ -12,48 +13,73 @@ exports.handler = async function(event) {
             body: "",
         };
     }
+    // Ensure the request is a POST request
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
 
     try {
+        // Parse the incoming data from the frontend
         const body = JSON.parse(event.body || "{}");
-        const { title, description } = body;
+        const { category, title, description } = body;
 
-        if (!title && !description) {
-            return { statusCode: 400, body: JSON.stringify({ error: "Input is missing." }) };
+        // Validate that the required fields are present
+        if (!title || !category) {
+            return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
         }
 
+        // Securely get the API key from Netlify's environment variables
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
-        // --- NEW PROMPT WITH INDIAN E-COMMERCE INSTRUCTIONS ---
+        // --- Dynamically set the AI's instructions based on the chosen category ---
+        let systemInstructions = '';
+        if (category === 'eco') {
+            systemInstructions = `
+                You are an Eco-Friendly product analyst for the Indian market.
+                - If the product is not eco-friendly, your recommendations title must be "Better, Eco-Friendly Alternatives". Recommend sustainable alternatives.
+                - If the product is eco-friendly, your recommendations title must be "Where to Buy This & Similar Products".
+                - For each recommendation, provide a valid shopping link from an Indian e-commerce site (Flipkart, Amazon.in, Amala Earth, etc.).
+            `;
+        } else if (category === 'food') {
+            systemInstructions = `
+                You are a Health Food analyst for the Indian market.
+                - If the food is unhealthy, your recommendations title must be "Healthier Food Alternatives". Recommend healthy options.
+                - If the food is healthy, your recommendations title must be "Where to Buy This Healthy Food".
+                - For each recommendation, provide a valid shopping link from an Indian grocery or health food site (BigBasket, Blinkit, Zepto, etc.).
+            `;
+        } else if (category === 'cosmetic') {
+            systemInstructions = `
+                You are a Safe Cosmetics analyst for the Indian market.
+                - If the cosmetic has harmful ingredients, your recommendations title must be "Safer & Cleaner Alternatives". Recommend products with safe ingredients.
+                - If the cosmetic is safe, your recommendations title must be "Where to Buy This Clean Cosmetic".
+                - For each recommendation, provide a valid shopping link from an Indian beauty site (Nykaa, Myntra, Purplle, etc.).
+            `;
+        }
+
+        // --- Construct the final, detailed prompt for the AI ---
         const prompt = `
-            You are "Eco Jinner Pro," a sustainability analyst with a focus on the Indian market. Your task is to analyze the provided product information and return a structured JSON object.
+            ${systemInstructions}
 
-            **Analysis Instructions:**
-            1.  **Overall Score:** Provide an "overallScore" from 0 to 100.
-            2.  **Category Scores:** Provide scores (0-100) for "materials", "manufacturing", and "endOfLife".
-            3.  **Verdict:** Provide a short, one-sentence "verdict".
-            4.  **Summary:** Write a detailed "summary" in Markdown.
-            5.  **Recommendations (IMPORTANT INDIAN FOCUS):**
-                * Your primary goal is to provide **working, direct shopping links** from e-commerce sites that are popular in **India** (e.g., **Flipkart, Amazon.in, Myntra, Nykaa, Tata CLiQ, Brown Living, Amala Earth**).
-                * Prioritize products from companies that sell directly in India.
-                * If the score is below 70, provide an "alternatives" array with objects containing a "name" and a valid "link".
-                * If the score is 70 or above, provide a "shopping" array with objects containing a "name" and a valid "link".
-                * If applicable, provide a "diy" object with a "title" and "steps" array.
+            **Task:** Analyze the user's product. Then, find a representative image for the user's product and for each of your recommendations. Return a single, clean JSON object. Do not include any text, notes, or markdown formatting outside the final JSON object.
 
-            **JSON Output Structure (MUST follow this exactly, no extra text):**
+            **JSON Output Structure (MUST follow this exactly):**
             \`\`\`json
             {
-              "overallScore": 78,
-              "scores": { "materials": 80, "manufacturing": 70, "endOfLife": 85 },
-              "verdict": "A good sustainable choice available in India.",
-              "summary": "This product shows strong eco-credentials...",
+              "productName": "User's Product Name",
+              "productImage": "https://example.com/image_of_users_product.jpg",
+              "isRecommended": false,
+              "verdict": "A short, clear verdict on the product.",
+              "summary": "A detailed analysis in Markdown format.",
               "recommendations": {
-                "shopping": [
-                  { "name": "Brand X Khadi Shirt", "link": "https://www.flipkart.com/..." },
-                  { "name": "Brand Y Jute Bag", "link": "https://www.amazon.in/..." }
+                "title": "The title you generated based on instructions.",
+                "items": [
+                  {
+                    "name": "Recommended Product 1",
+                    "description": "A short, compelling description of the alternative.",
+                    "image": "https://example.com/image_of_recommendation1.jpg",
+                    "link": "https://www.flipkart.com/..."
+                  }
                 ]
               }
             }
@@ -64,45 +90,39 @@ exports.handler = async function(event) {
             Description: ${description || "No description provided"}
         `;
 
+        // Use the specific model required by your API key
         const modelToUse = "gemini-2.0-flash";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
 
+        // Call the Gemini API
         const response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
+        // Handle errors from the Gemini API
         if (!response.ok) {
             const errorData = await response.json();
             console.error("Gemini API Error:", errorData);
-            throw new Error(`Gemini API responded with status: ${response.status}`);
+            throw new Error(`Gemini API Error: ${errorData.error.message}`);
         }
 
         const data = await response.json();
         const rawText = data.candidates[0].content.parts[0].text;
+        
+        // Clean and parse the JSON from the AI's response
+        const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // Bulletproof parsing logic
-        try {
-            const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
-            return {
-                statusCode: 200,
-                headers: { "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify(jsonResponse)
-            };
-        } catch (parsingError) {
-            console.error("JSON parsing failed. AI returned malformed text:", rawText);
-            return {
-                statusCode: 200,
-                headers: { "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({
-                    isError: true,
-                    fallbackText: `The AI returned a response that could not be structured. Here is the raw text:\n\n---\n\n${rawText}`
-                })
-            };
-        }
+        // Send the clean JSON back to the frontend
+        return {
+            statusCode: 200,
+            headers: { "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify(jsonResponse)
+        };
 
     } catch (e) {
+        // Catch any other errors in the function and return a clear error message
         console.error("Backend Error:", e);
         return {
             statusCode: 500,
