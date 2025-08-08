@@ -1,67 +1,84 @@
-document.getElementById('analyze-btn').onclick = async function () {
-  const title = document.getElementById('prod-title').value.trim();
-  const desc = document.getElementById('prod-desc').value.trim();
+// --- Enhanced Code ---
 
-  // User guidance for empty input
-  if (!title && !desc) {
-    document.getElementById('ai-result').innerHTML = "<span style='color:#c00;'>Please enter a product title or description.</span>";
-    return;
-  }
+// It's best practice to get references to DOM elements once and reuse them.
+const analyzeBtn = document.getElementById('analyze-btn');
+const prodTitleInput = document.getElementById('prod-title');
+const prodDescInput = document.getElementById('prod-desc');
+const spinner = document.getElementById('eco-loading-spinner');
+const resultDiv = document.getElementById('ai-result');
 
-  // Show loading spinner at analysis start
-  document.getElementById('eco-loading-spinner').style.display = "block";
-  document.getElementById('ai-result').innerHTML = "";
+analyzeBtn.onclick = async function () {
+  // Enhancement: Disable the button to prevent multiple submissions while processing.
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = 'Analyzing...'; // Optional: Change button text
+
+  // Show loading spinner and clear previous results.
+  spinner.style.display = 'block';
+  resultDiv.innerHTML = '';
 
   try {
-    const response = await fetch('https://ecojinner.netlify.app/.netlify/functions/gemini-proxy', {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description: desc }),
-    });
-    const data = await response.json();
+    const title = prodTitleInput.value.trim();
+    const desc = prodDescInput.value.trim();
 
-    let answer = "";
-    try {
-      const raw = JSON.parse(data.result);
-      // Developer debug: remove this line when you're live!
-      console.log("Gemini raw data.result:", raw);
-
-      // If Gemini returns an error field, show it to the user
-      if (raw.error && raw.error.message) {
-        answer = `<span style="color:red;"><strong>Gemini Error:</strong> ${raw.error.message}</span>`;
-      }
-      // Try to robustly extract answer (using array indices!)
-      else if (
-        raw.candidates &&
-        Array.isArray(raw.candidates) &&
-        raw.candidates[0] &&
-        raw.candidates.content &&
-        Array.isArray(raw.candidates.content.parts)
-      ) {
-        // Get the first non-empty part with text (in case model changes)
-        const part = raw.candidates.content.parts.find(
-          p => typeof p.text === "string" && p.text.trim() !== ""
-        );
-        if (part) {
-          answer = part.text;
-        } else {
-          answer = "Gemini did not return an answer. Try using more details, e.g. 'organic cotton shirt' or 'reusable plastic bottle'.";
-        }
-      } else {
-        answer = "Sorry, I couldn't extract a Gemini answer. Please check spelling and try again!";
-      }
-    } catch (e) {
-      answer = "Sorry, backend returned invalid data. Please try again!";
+    // User guidance for empty input.
+    if (!title && !desc) {
+      resultDiv.innerHTML = "<span style='color:#c00;'>Please enter a product title or description.</span>";
+      // The 'finally' block will still run to re-enable the button.
+      return; 
     }
 
-    // Hide the loading spinner, show the result
-    document.getElementById('eco-loading-spinner').style.display = "none";
-    document.getElementById('ai-result').innerHTML = marked.parse(answer);
+    const response = await fetch('https://ecojinner.netlify.app/.netlify/functions/gemini-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description: desc }),
+    });
+
+    // Enhancement: Check for HTTP errors (e.g., 404, 500).
+    // The `fetch` API does not throw an error for these, so we must check `response.ok`.
+    if (!response.ok) {
+      // Throw an error to be caught by the main catch block.
+      throw new Error(`Server responded with status: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    let answer = '';
+
+    // We expect `data.result` to be a stringified JSON from the backend.
+    // This inner try/catch handles potential parsing errors of that specific string.
+    try {
+      const raw = JSON.parse(data.result);
+      console.log("Gemini raw data.result:", raw); // For debugging.
+
+      // Enhancement: Use Optional Chaining (?.) for safe and clean property access.
+      // BUG FIX: The correct path is `raw.candidates[0]...`, not `raw.candidates...`
+      const textPart = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const geminiError = raw?.error?.message;
+
+      if (geminiError) {
+        answer = `<span style="color:red;"><strong>Gemini Error:</strong> ${geminiError}</span>`;
+      } else if (textPart) {
+        answer = textPart;
+      } else {
+        answer = "Sorry, a valid response was not received from the AI. Please try rephrasing your input.";
+      }
+    } catch (e) {
+      console.error("Error parsing backend data.result:", e);
+      answer = "Sorry, the data from the backend was malformed. Please try again!";
+    }
+
+    // Use the `marked` library to parse Markdown in the answer.
+    resultDiv.innerHTML = marked.parse(answer);
 
   } catch (e) {
-    document.getElementById('eco-loading-spinner').style.display = "none";
-    document.getElementById('ai-result').innerHTML =
-      `<span style="color: red;">Fetch error: ${e.message}</span><br>` +
-      `<span style="color: #666;">Please check your internet connection or re-try soon.</span>`;
+    // This single catch block now handles network errors, HTTP errors, and other exceptions.
+    console.error("Fetch or processing error:", e);
+    resultDiv.innerHTML =
+      `<span style="color: red;"><strong>Error:</strong> ${e.message}</span><br>` +
+      `<span style="color: #666;">Please check your internet connection or try again soon.</span>`;
+  } finally {
+    // Enhancement: This `finally` block ensures the UI is always restored, even if an error occurs.
+    spinner.style.display = 'none';
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analyze'; // Optional: Restore original button text
   }
 };
