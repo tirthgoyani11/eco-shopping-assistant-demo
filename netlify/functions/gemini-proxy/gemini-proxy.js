@@ -1,107 +1,7 @@
 const fetch = require("node-fetch");
 
-// =================================================================
-// UTILS MODULES (Combined into one file to prevent import errors)
-// =================================================================
-
-// --- Affiliate Manager Logic ---
-const YOUR_AMAZON_TAG = "ecojinner-21"; // Example Amazon India tag
-function addAffiliateTag(url) {
-    if (!url) return url;
-    try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname.includes("amazon.in")) {
-            urlObj.searchParams.set("tag", YOUR_AMAZON_TAG);
-            return urlObj.toString();
-        }
-        return url;
-    } catch (error) {
-        return url;
-    }
-}
-
-// --- AI Prompts Logic ---
-function getAnalystPrompt(category, title, description) {
-    return `
-        You are a senior product analyst. Analyze the user's product and create a research plan for your team of scouts.
-        **JSON Output Structure (MUST follow this exactly):**
-        \`\`\`json
-        {
-          "productName": "User's Product Name",
-          "productImage": "https://example.com/image_of_users_product.jpg",
-          "isRecommended": false,
-          "verdict": "A short, clear verdict.",
-          "summary": "A detailed analysis in Markdown format.",
-          "recommendationsTitle": "Better, Eco-Friendly Alternatives",
-          "scoutKeywords": ["Stainless Steel Water Bottle", "Glass Water Bottle", "Copper Water Bottle"]
-        }
-        \`\`\`
-        --- USER INPUT ---
-        Category: ${category}
-        Title: ${title}
-        Description: ${description || "No description provided"}
-    `;
-}
-
-function getScoutPrompt(keyword) {
-    return `
-        You are an expert Indian market product scout. Your only mission is to find ONE single, top-rated product based on the keyword.
-        **Instructions:**
-        1. Find a specific product on a major Indian e-commerce site (Amazon.in, Flipkart, etc.).
-        2. Provide TWO links: "specificProductLink" and "categorySearchLink" (a fallback).
-        **JSON Output Structure:**
-        \`\`\`json
-        {
-          "name": "The exact product name",
-          "description": "A short, compelling description.",
-          "image": "A direct, high-quality image URL.",
-          "specificProductLink": "https://www.amazon.in/dp/B07922769T",
-          "categorySearchLink": "https://www.amazon.in/s?k=stainless+steel+bottle"
-        }
-        \`\`\`
-        --- SCOUT'S TARGET ---
-        Keyword: "${keyword}"
-    `;
-}
-
-// --- Product Scout & Verifier Logic ---
-async function verifyLink(url) {
-    if (!url || !url.startsWith('http')) return false;
-    try {
-        const response = await fetch(url, { method: 'HEAD', timeout: 3500 });
-        return response.ok;
-    } catch (error) {
-        return false;
-    }
-}
-
-async function findProduct(keyword, apiKey) {
-    const scoutPrompt = getScoutPrompt(keyword);
-    const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: scoutPrompt }] }] })
-        }
-    );
-    if (!response.ok) return null;
-    const data = await response.json();
-    try {
-        const rawText = data.candidates[0].content.parts[0].text;
-        return JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
-    } catch (e) {
-        return null;
-    }
-}
-
-
-// =================================================================
-// MAIN HANDLER
-// =================================================================
 exports.handler = async function(event) {
-    if (event.httpMethod === "OPTIONS") {
-        return { statusCode: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" } };
-    }
+    // Standard boilerplate for Netlify functions
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -109,60 +9,119 @@ exports.handler = async function(event) {
     try {
         const body = JSON.parse(event.body || "{}");
         const { category, title, description } = body;
-        if (!title || !category) return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+
+        if (!title || !category) {
+            return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+        }
 
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
-        if (!GEMINI_KEY) throw new Error("API key not configured.");
+        if (!GEMINI_KEY) {
+            console.error("CRITICAL: GEMINI_API_KEY environment variable not found!");
+            throw new Error("API key is not configured on the server.");
+        }
 
-        // --- Step 1: The Analyst ---
-        const analystPrompt = getAnalystPrompt(category, title, description);
-        const analystResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
+        // --- EXPERT-LEVEL PROMPTS WITH ADVANCED COSMETICS LOGIC ---
+        let systemInstructions = '';
+        if (category === 'eco') {
+            systemInstructions = `
+                You are an expert Eco-Friendly product analyst for the Indian market.
+                - Your analysis must cover the full lifecycle: raw materials, manufacturing impact, and end-of-life (e.g., biodegradability, recyclability).
+                - Recommendations must be from Indian e-commerce sites (Flipkart, Amazon.in, etc.).
+            `;
+        } else if (category === 'food') {
+            systemInstructions = `
+                You are an expert Health Food analyst and nutritionist for the Indian market.
+                - Your analysis MUST detect and mention specific negative attributes like high added sugars, preservatives (e.g., nitrates, BHA), artificial colors, and high processing levels.
+                - You MUST also detect and mention positive attributes like 'high-fiber', 'whole grain', 'organic', 'rich in protein'.
+                - Recommendations must be from Indian grocery sites (BigBasket, Blinkit, etc.).
+            `;
+        } else if (category === 'cosmetic') {
+            // --- NEW, IMPROVED COSMETICS INSTRUCTIONS ---
+            systemInstructions = `
+                You are an expert Clean Cosmetics analyst for the Indian market.
+                - Your analysis MUST screen for and mention common harmful chemicals like parabens, sulfates (SLS/SLES), and phthalates.
+                - You MUST also identify and praise beneficial properties like 'vegan', 'cruelty-free', 'dermatologically tested', or 'certified organic'.
+                - For recommendations, you MUST search a broad range of Indian beauty sites, including Nykaa, Myntra, Purplle, Tira Beauty, and Amazon.in.
+                - Your primary goal is to find a direct product link. If a reliable direct link is not available on any of those sites, you MUST provide a Google search link as a fallback.
+            `;
+        }
+
+        const prompt = `
+            ${systemInstructions}
+
+            **Task:** Perform an expert analysis of the user's product based on your specialized role. Find a representative image for the user's product and for each of your recommendations. For each recommendation, generate a reliable link based on your instructions. Return a single, clean JSON object.
+
+            **JSON Output Structure (MUST follow this exactly):**
+            \`\`\`json
+            {
+              "productName": "User's Product Name",
+              "productImage": "A valid, direct URL to a high-quality image of the user's product.",
+              "isRecommended": false,
+              "verdict": "A short, clear verdict based on your expert analysis.",
+              "summary": "A detailed analysis in Markdown, mentioning the specific positive or negative attributes you detected.",
+              "recommendations": {
+                "title": "A relevant title for the recommendations.",
+                "items": [
+                  {
+                    "name": "Recommended Product 1",
+                    "description": "A short, compelling description highlighting its key benefits.",
+                    "image": "A valid, direct URL to a high-quality image of the recommendation.",
+                    "link": "A valid, working URL to the product page OR a Google search link."
+                  }
+                ]
+              }
+            }
+            \`\`\`
+
+            --- USER INPUT ---
+            Title: ${title}
+            Description: ${description || "No description provided"}
+        `;
+
+        const modelToUse = "gemini-1.5-flash-latest";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
+
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: analystPrompt }] }] })
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                 safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                ],
+            })
         });
-        if (!analystResponse.ok) throw new Error("The initial AI analysis failed.");
-        const analystData = await analystResponse.json();
-        const analystResult = JSON.parse(analystData.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // --- Step 2 & 3: The Scouts & The Verifier ---
-        const scoutKeywords = analystResult.scoutKeywords || [];
-        const scoutPromises = scoutKeywords.map(keyword => findProduct(keyword, GEMINI_KEY));
-        const scoutResults = (await Promise.all(scoutPromises)).filter(Boolean);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Gemini API Error: ${errorData.error.message}`);
+        }
 
-        const verifiedItems = await Promise.all(scoutResults.map(async (item) => {
-            const isLinkValid = await verifyLink(item.specificProductLink);
-            let finalLink = isLinkValid ? item.specificProductLink : item.categorySearchLink;
-            finalLink = addAffiliateTag(finalLink);
+        const data = await response.json();
+
+        // Bulletproof Parsing Logic
+        try {
+            const rawText = data.candidates[0].content.parts[0].text;
+            const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
             return {
-                name: item.name,
-                description: item.description,
-                image: item.image,
-                link: finalLink,
+                statusCode: 200,
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify(jsonResponse)
             };
-        }));
-
-        // --- Final Assembly ---
-        const finalResponse = {
-            productName: analystResult.productName,
-            productImage: analystResult.productImage,
-            isRecommended: analystResult.isRecommended,
-            verdict: analystResult.verdict,
-            summary: analystResult.summary,
-            recommendations: {
-                title: analystResult.recommendationsTitle,
-                items: verifiedItems,
-            },
-        };
-
-        return {
-            statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(finalResponse),
-        };
+        } catch (parsingError) {
+            console.error("JSON parsing failed. AI returned malformed text.");
+            throw new Error("The AI returned a response in an unexpected format. Please try again.");
+        }
 
     } catch (e) {
-        console.error("Backend Error:", e);
-        return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + e.message }) };
+        console.error("--- FATAL ERROR IN FUNCTION ---", e.message);
+        return {
+            statusCode: 500,
+            headers: { "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify({ error: "An internal server error occurred: " + e.message })
+        };
     }
 };
