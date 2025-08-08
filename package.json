@@ -1,7 +1,7 @@
 {
-  "name": "eco-jinner-professional-function",
-  "version": "6.0.0",
-  "description": "Eco Jinner function with a hybrid AI and live image search algorithm.",
+  "name": "eco-jinner-universal-function",
+  "version": "8.0.0",
+  "description": "The definitive serverless backend for the Eco Jinner Universal Analyst.",
   "main": "gemini-proxy.js",
   "license": "MIT",
   "dependencies": {
