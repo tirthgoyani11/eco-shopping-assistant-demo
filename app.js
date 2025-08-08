@@ -31,7 +31,7 @@ document.getElementById('analyze-btn').onclick = async function () {
         ) {
           document.getElementById('ai-result').innerText = raw.candidates.content.parts.text;
         } else {
-          document.getElementById('ai-result').innerText = data.result; // show raw JSON fallback
+          document.getElementById('ai-result').innerText = data.result; // fallback: show raw JSON
         }
       } catch (e) {
         document.getElementById('ai-result').innerText = data.result; // fallback on parse error
