@@ -59,38 +59,29 @@ exports.handler = async function(event) {
     const data = await response.json();
 
     // Return Gemini answer if present
-    if (
-      data.candidates &&
-      data.candidates[0] &&
-      data.candidates.content &&
-      data.candidates.content.parts &&
-      data.candidates.content.parts &&
-      data.candidates.content.parts.text
-    ) {
-      return withCORS({
-        statusCode: 200,
-        body: JSON.stringify({ result: data.candidates.content.parts.text })
-      });
-    }
-
-    // If Gemini returned error
-    if (data.error) {
-      return withCORS({
-        statusCode: 200,
-        body: JSON.stringify({ error: data.error.message })
-      });
-    }
-
-    // If unexpected Gemini API format, return the raw response for debugging
-    return withCORS({
-      statusCode: 200,
-      body: JSON.stringify({ error: "Gemini raw response: " + JSON.stringify(data) })
-    });
-
-  } catch (e) {
-    return withCORS({
-      statusCode: 500,
-      body: JSON.stringify({ error: e.message })
-    });
-  }
-};
+   if (
+  data.candidates &&
+  data.candidates[0] &&
+  data.candidates.content &&
+  data.candidates.content.parts &&
+  data.candidates.content.parts &&
+  data.candidates.content.parts.text
+) {
+  // Return the Gemini answer in the "result" property
+  return withCORS({
+    statusCode: 200,
+    body: JSON.stringify({ result: data.candidates.content.parts.text })
+  });
+} else if (data.error) {
+  // If Gemini sends an actual error message
+  return withCORS({
+    statusCode: 200,
+    body: JSON.stringify({ error: data.error.message })
+  });
+} else {
+  // Only return raw Gemini response if something is really broken
+  return withCORS({
+    statusCode: 200,
+    body: JSON.stringify({ error: "Gemini backend failed: " + JSON.stringify(data) })
+  });
+}
