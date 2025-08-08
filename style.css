@@ -1,0 +1,111 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(120deg, #eafaf1 80%, #bef0c8 100%);
+  margin: 0;
+  padding: 0;
+  color: #222;
+}
+header {
+  text-align: center;
+  margin: 2rem 0 1rem 0;
+}
+h1 {
+  font-size: 2.3rem;
+  color: #2ecc71;
+  margin: 0;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px #abe9b9;
+}
+#product-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.product-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 18px #abe9b9;
+  padding: 1.2rem 1rem 1rem 1rem;
+  max-width: 340px;
+  min-width: 260px;
+  text-align: center;
+  position: relative;
+  margin: 0.5rem;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.product-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 32px #2ecc7170;
+}
+.badge {
+  width: 40px;
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  animation: popIn 0.5s;
+  filter: drop-shadow(0 0 5px #2ecc71);
+}
+@keyframes popIn {
+  0% { transform: scale(0.2); opacity: 0.2;}
+  70% { transform: scale(1.2);}
+  100% { transform: scale(1); opacity: 1;}
+}
+.product-card h3 {
+  margin-top: 0.7rem;
+  color: #27ae60;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.product-card button {
+  margin-top: 0.6rem;
+  padding: 0.5em 2em;
+  background: #2ecc71;
+  color: #fff;
+  border: none;
+  border-radius: 27px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 7px #abe9b9;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.product-card button:hover {
+  background: #27ae60;
+  box-shadow: 0 4px 14px #27ae6060;
+}
+#popup {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #bef0c8;
+  color: #222;
+  font-size: 1.15em;
+  border-radius: 12px;
+  padding: 1.2em 1.7em;
+  box-shadow: 0 4px 18px #abe9b9;
+  display: none;
+  z-index: 200;
+  text-align: center;
+}
+#popup.visible {
+  display: block;
+  animation: fadeInPopup 0.4s;
+}
+@keyframes fadeInPopup {
+  from { opacity: 0; transform: translateY(30px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+/* Responsive for mobile */
+@media (max-width: 700px) {
+  #product-list {
+    flex-direction: column;
+    align-items: center;
+  }
+  .product-card {
+    max-width: 95vw;
+    min-width: 68vw;
+  }
+}
