@@ -101,5 +101,46 @@ window.showPopup = (name, fact, cert, suggestion) => {
     popup.classList.remove('visible');
   }, 3200);
 };
+document.getElementById('analyze-btn').onclick = async function() {
+  const title = document.getElementById('prod-title').value.trim();
+  const desc = document.getElementById('prod-desc').value.trim();
+  if (!title && !desc) {
+    document.getElementById('ai-result').innerText = "Please enter a product title or description.";
+    return;
+  }
+  document.getElementById('ai-result').innerText = "Gemini analyzing...";
+
+  try {
+    const apiKey = "AIzaSyCdBFIzpAfPfk7tW9IUOSihKU20XmuyrGA"; // Replace with your Gemini API key!
+    const prompt = `Analyze the following product for eco-friendliness. Is it eco-friendly? If yes, state one main eco feature; if no, briefly explain why not:
+Title: ${title}
+Description: ${desc}`;
+
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+    const data = await response.json();
+    let aiMsg = "No response.";
+    if (
+      data.candidates &&
+      data.candidates[0] &&
+      data.candidates.content &&
+      data.candidates.content.parts &&
+      data.candidates.content.parts &&
+      data.candidates.content.parts.text
+    ) {
+      aiMsg = data.candidates.content.parts.text;
+    } else if (data.error) {
+      aiMsg = "API error: " + data.error.message;
+    }
+    document.getElementById('ai-result').innerText = aiMsg;
+  } catch (e) {
+    document.getElementById('ai-result').innerText = "Error: " + (e.message || "Check API Key/Network");
+  }
+};
 
 
