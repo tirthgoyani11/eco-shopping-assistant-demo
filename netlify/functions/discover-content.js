@@ -1,74 +1,121 @@
 /**
- * Netlify Function: discover-content.js
- * --------------------------------------
- * This function simulates a backend that provides dynamic content
- * for the "Discover" page. It returns a structured JSON object
- * with featured products and filterable product grids.
+ * Netlify Function: discover-content.js (Upgraded)
+ * -------------------------------------------------
+ * This function now uses the Serper API for images/links and the Gemini API
+ * for descriptions to generate dynamic content for the Discover page.
  */
 
-exports.handler = async function(event, context) {
-    // In a real application, this data would come from a database.
-    const discoverData = {
-        editorsPicks: [
-            {
-                id: 1,
-                name: "Handmade Clay Water Bottle",
-                brand: "MittiCool",
-                description: "A natural and traditional way to keep water cool. Made by local Indian artisans.",
-                image: "https://placehold.co/600x400/D2691E/white?text=Clay+Bottle",
-                tags: ["Kitchen", "Made in India", "Plastic-Free"]
-            }
-        ],
-        products: [
-            {
-                id: 2,
-                name: "Organic Cotton Tote Bag",
-                brand: "EcoBags",
-                description: "Durable and stylish, perfect for groceries and daily use. GOTS certified.",
-                image: "https://placehold.co/600x400/8FBC8F/white?text=Tote+Bag",
-                tags: ["Fashion", "Organic"]
-            },
-            {
-                id: 3,
-                name: "Bamboo Toothbrush Set (4-pack)",
-                brand: "BrushWithBamboo",
-                description: "A zero-waste alternative to plastic toothbrushes. Biodegradable handles.",
-                image: "https://placehold.co/600x400/228B22/white?text=Toothbrushes",
-                tags: ["Personal Care", "Plastic-Free"]
-            },
-            {
-                id: 4,
-                name: "Stainless Steel Reusable Straws",
-                brand: "SteelSip",
-                description: "Comes with a cleaning brush and a travel pouch. Say no to single-use plastic.",
-                image: "https://placehold.co/600x400/708090/white?text=Steel+Straws",
-                tags: ["Kitchen", "Plastic-Free"]
-            },
-            {
-                id: 5,
-                name: "Khadi Face Mask",
-                brand: "Gramodyog",
-                description: "Handwoven, breathable, and reusable face masks made from Khadi fabric.",
-                image: "https://placehold.co/600x400/E6E6FA/black?text=Khadi+Mask",
-                tags: ["Personal Care", "Made in India"]
-            },
-             {
-                id: 6,
-                name: "Vegan Leather Wallet",
-                brand: "Arture",
-                description: "A cruelty-free wallet made from innovative cork fabric. PETA-approved vegan.",
-                image: "https://placehold.co/600x400/A0522D/white?text=Vegan+Wallet",
-                tags: ["Fashion", "Vegan"]
-            }
-        ]
-    };
+const axios = require("axios");
 
-    return {
-        statusCode: 200,
-        headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*", // Allow requests from any origin
-        },
-        body: JSON.stringify(discoverData),
-    };
+// --- Helper Function to get a Google Image and Link using Serper ---
+async function getProductData(productName, apiKey) {
+    try {
+        const response = await axios.post('https://google.serper.dev/shopping', {
+            q: `${productName} india`,
+            gl: 'in', // Geolocation: India
+        }, {
+            headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' }
+        });
+
+        // Find the first valid shopping result
+        const firstResult = response.data.shopping.find(item => item.imageUrl && item.link);
+        
+        if (firstResult) {
+            return {
+                image: firstResult.imageUrl,
+                link: firstResult.link
+            };
+        }
+        // Fallback if no shopping results
+        return {
+            image: `https://placehold.co/600x400/334155/white?text=${encodeURIComponent(productName)}`,
+            link: `https://www.google.com/search?q=${encodeURIComponent(productName)}`
+        };
+
+    } catch (error) {
+        console.error(`Serper API failed for: "${productName}"`, error.message);
+        return {
+            image: `https://placehold.co/600x400/334155/white?text=Error`,
+            link: `https://www.google.com/search?q=${encodeURIComponent(productName)}`
+        };
+    }
+}
+
+// --- Main Handler ---
+exports.handler = async function(event, context) {
+    const { SERPER_API_KEY, GEMINI_API_KEY } = process.env;
+
+    if (!SERPER_API_KEY || !GEMINI_API_KEY) {
+        return { statusCode: 500, body: JSON.stringify({ error: "API keys are not configured." }) };
+    }
+
+    // Base list of products to discover
+    const productList = [
+        { name: "Handmade Clay Water Bottle", brand: "MittiCool", tags: ["Kitchen", "Made in India", "Plastic-Free"] },
+        { name: "Organic Cotton Tote Bag", brand: "EcoBags", tags: ["Fashion", "Organic"] },
+        { name: "Bamboo Toothbrush Set", brand: "BrushWithBamboo", tags: ["Personal Care", "Plastic-Free"] },
+        { name: "Stainless Steel Reusable Straws", brand: "SteelSip", tags: ["Kitchen", "Plastic-Free"] },
+        { name: "Khadi Face Mask", brand: "Gramodyog", tags: ["Personal Care", "Made in India"] },
+        { name: "Vegan Leather Wallet", brand: "Arture", tags: ["Fashion", "Vegan"] }
+    ];
+
+    try {
+        // --- Step 1: Fetch all product data (images, links) in parallel ---
+        const productDataPromises = productList.map(p => getProductData(p.name, SERPER_API_KEY));
+        const resolvedProductData = await Promise.all(productDataPromises);
+
+        // --- Step 2: Use AI to generate all descriptions in a single batch ---
+        const decoratorPrompt = `
+            You are a creative marketing assistant for an eco-friendly brand in India.
+            For each product name provided below, write a short, compelling, and exciting description (around 15-20 words).
+            Use emojis where appropriate. Your tone should be enthusiastic and appeal to a young, conscious audience.
+
+            **JSON Output Structure (MUST follow this exactly):**
+            \`\`\`json
+            {
+              "descriptions": [
+                { "name": "Handmade Clay Water Bottle", "description": "Stay hydrated the traditional way! 💧 This beautiful clay bottle keeps your water naturally cool and pure. #GoPlasticFree" },
+                { "name": "Organic Cotton Tote Bag", "description": "Your stylish new best friend for shopping trips! 🛍️ Strong, reusable, and oh-so-good for Mother Earth. #SustainableFashion" }
+              ]
+            }
+            \`\`\`
+            --- PRODUCT LIST TO DECORATE ---
+            ${JSON.stringify(productList.map(p => ({ name: p.name })))}
+        `;
+
+        const geminiResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+            { contents: [{ parts: [{ text: decoratorPrompt }] }] }
+        );
+        const aiDescriptions = JSON.parse(geminiResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim()).descriptions;
+
+        // --- Step 3: Combine all data into the final product list ---
+        const finalProducts = productList.map((product, index) => {
+            const aiDesc = aiDescriptions.find(d => d.name === product.name);
+            return {
+                id: index + 1,
+                name: product.name,
+                brand: product.brand,
+                description: aiDesc ? aiDesc.description : "A great sustainable choice for everyday use.",
+                image: resolvedProductData[index].image,
+                link: resolvedProductData[index].link, // Added link
+                tags: product.tags
+            };
+        });
+
+        const discoverData = {
+            editorsPicks: [finalProducts[0]], // Feature the first product
+            products: finalProducts
+        };
+
+        return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify(discoverData),
+        };
+
+    } catch (error) {
+        console.error("Error in discover-content function:", error.response ? error.response.data : error.message);
+        return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred." }) };
+    }
 };
