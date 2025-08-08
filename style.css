@@ -194,3 +194,22 @@ body {
 #notification-modal {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
+
+/* ... (all previous styles remain the same) ... */
+
+/* --- 7. Panels & Modals --- */
+#history-panel, #confirm-modal, #confirm-modal-overlay, #mobile-menu {
+    transition: all 0.3s ease-in-out;
+}
+.history-item {
+    border-bottom: 1px solid var(--glass-border);
+}
+.history-item:last-child {
+    border-bottom: none;
+}
+.modal-overlay {
+    backdrop-filter: blur(4px);
+}
+
+/* ... (rest of the styles remain the same) ... */
+
