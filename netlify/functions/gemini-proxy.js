@@ -71,12 +71,14 @@ exports.handler = async function(event) {
         statusCode: 200,
         body: JSON.stringify({ error: data.error.message })
       });
-    } else {
-      return withCORS({
-        statusCode: 200,
-        body: JSON.stringify({ error: "Unknown error" })
-      });
-    }
+    }else {
+  // Show the raw Gemini JSON for debugging
+  return withCORS({
+    statusCode: 200,
+    body: JSON.stringify({ error: "Raw Gemini response", data })
+  });
+}
+
   } catch (e) {
     return withCORS({
       statusCode: 500,
