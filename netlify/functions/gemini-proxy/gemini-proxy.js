@@ -28,7 +28,7 @@ function getAnalystPrompt(category, title, description) {
         \`\`\`json
         {
           "productName": "User's Product Name",
-          "productImage": "https://example.com/image_of_users_product.jpg",
+          "productImage": "A valid, direct URL to a high-quality image of the user's product.",
           "isRecommended": false,
           "verdict": "A short, clear verdict.",
           "summary": "A detailed analysis in Markdown format.",
@@ -43,13 +43,15 @@ function getAnalystPrompt(category, title, description) {
     `;
 }
 
-function getScoutPrompt(keyword) {
+function getScoutPrompt(keyword, isRetry = false) {
+    // If this is a retry, use a simpler, more direct prompt.
+    const retryInstructions = isRetry ? "Your first attempt failed. Be more general in your search this time." : "";
     return `
-        You are an expert Indian market product scout. Your only mission is to find ONE single, top-rated product based on the keyword.
+        You are an expert Indian market product scout. Your only mission is to find ONE single, top-rated product based on the keyword. ${retryInstructions}
         **Instructions:**
         1. Find a specific product on a major Indian e-commerce site (Amazon.in, Flipkart, etc.).
-        2. Provide TWO links: "specificProductLink" and "categorySearchLink" (a fallback).
-        **JSON Output Structure:**
+        2. Provide TWO valid, working links: "specificProductLink" and "categorySearchLink".
+        **JSON Output Structure (No extra text, just the JSON object):**
         \`\`\`json
         {
           "name": "The exact product name",
@@ -75,8 +77,11 @@ async function verifyLink(url) {
     }
 }
 
-async function findProduct(keyword, apiKey) {
-    const scoutPrompt = getScoutPrompt(keyword);
+async function findProduct(keyword, apiKey, attempt = 1) {
+    const MAX_ATTEMPTS = 2;
+    const isRetry = attempt > 1;
+
+    const scoutPrompt = getScoutPrompt(keyword, isRetry);
     const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
             method: "POST",
@@ -84,14 +89,26 @@ async function findProduct(keyword, apiKey) {
             body: JSON.stringify({ contents: [{ parts: [{ text: scoutPrompt }] }] })
         }
     );
+
     if (!response.ok) return null;
-    const data = await response.json();
+
     try {
+        const data = await response.json();
         const rawText = data.candidates[0].content.parts[0].text;
-        return JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
+        const result = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
+        
+        // Basic validation of the result
+        if (result && result.name && result.specificProductLink) {
+            return result;
+        }
     } catch (e) {
-        return null;
+        // If parsing fails or validation fails, and we have attempts left, retry.
+        if (attempt < MAX_ATTEMPTS) {
+            console.log(`Scout mission for "${keyword}" failed on attempt ${attempt}. Retrying...`);
+            return findProduct(keyword, apiKey, attempt + 1);
+        }
     }
+    return null; // Return null if all attempts fail
 }
 
 
