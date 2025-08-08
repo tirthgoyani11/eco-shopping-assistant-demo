@@ -18,9 +18,23 @@ document.getElementById('analyze-btn').onclick = async function () {
 
     // Properly handle result from proxy function
     if (data.result) {
-      document.getElementById('ai-result').innerText = data.result;
-    } else if (data.error) {
-      document.getElementById('ai-result').innerText = "Error: " + data.error;
+      try {
+        const raw = JSON.parse(data.result);
+        if (
+          raw.candidates &&
+          raw.candidates[0] &&
+          raw.candidates.content &&
+          raw.candidates.content.parts &&
+          raw.candidates.content.parts &&
+          raw.candidates.content.parts.text
+        ) {
+          document.getElementById('ai-result').innerText = raw.candidates.content.parts.text;
+        } else {
+          document.getElementById('ai-result').innerText = data.result; // fallback: raw JSON or diagnostic
+        }
+      } catch (e) {
+        document.getElementById('ai-result').innerText = data.result; // fallback on parse error
+      }
     } else {
       document.getElementById('ai-result').innerText = "Unknown error from AI backend.";
     }
