@@ -1,5 +1,5 @@
 /* =================================================================
-   Eco Jinner - Definitive Stylesheet (v7 - Multi-Page)
+   Eco Jinner - Definitive Stylesheet (v11 - Complete)
    ================================================================= */
 
 /* --- 1. CSS Variables & Global Setup --- */
@@ -82,7 +82,6 @@ body {
     background-color: rgba(255, 255, 255, 0.1);
     border-color: var(--accent-secondary);
 }
-
 
 /* --- 4. Component Styles --- */
 .command-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -177,7 +176,7 @@ body {
 }
 
 /* --- 7. Panels & Modals --- */
-#history-panel, #confirm-modal, #confirm-modal-overlay {
+#history-panel, #confirm-modal, #confirm-modal-overlay, #mobile-menu {
     transition: all 0.3s ease-in-out;
 }
 .history-item {
@@ -195,21 +194,26 @@ body {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* ... (all previous styles remain the same) ... */
+/* --- 9. Discover Page Styles --- */
+.filter-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s ease-in-out;
+}
+.filter-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-secondary);
+}
+.filter-btn.active-filter {
+    background-color: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
 
-/* --- 7. Panels & Modals --- */
-#history-panel, #confirm-modal, #confirm-modal-overlay, #mobile-menu {
-    transition: all 0.3s ease-in-out;
+.discover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.history-item {
-    border-bottom: 1px solid var(--glass-border);
+.discover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-.history-item:last-child {
-    border-bottom: none;
-}
-.modal-overlay {
-    backdrop-filter: blur(4px);
-}
-
-/* ... (rest of the styles remain the same) ... */
-
