@@ -6,39 +6,32 @@
     <title>Eco Jinner - The Definitive Analyst</title>
     <meta name="description" content="Your AI-Powered analyst for sustainability, healthy food, and cosmetics. Get instant analysis and recommendations for better products.">
     
-    <!-- Favicon Links -->
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     
-    <!-- Custom Stylesheet -->
+    <!-- Link to your custom stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="text-gray-200 antialiased">
-    <!-- Decorative Background -->
-    <div class="aurora-container">
-        <div class="aurora aurora-1"></div>
-        <div class="aurora aurora-2"></div>
-        <div class="aurora aurora-3"></div>
-    </div>
+<body class="antialiased">
+    <!-- Canvas for the 3D background, placed at the top -->
+    <canvas id="bg-canvas"></canvas>
 
     <div class="relative min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="w-full p-4 flex justify-between items-center">
+        <!-- Header with Logo and controls -->
+        <header class="w-full p-4 flex justify-between items-center flex-shrink-0">
             <a href="/" class="flex items-center gap-3" aria-label="Eco Jinner Home">
                 <svg class="w-10 h-10 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>
                 <span class="text-xl font-bold text-white">Eco Jinner</span>
             </a>
             <div>
+                <!-- History and Settings buttons are preserved -->
                 <button id="history-btn" aria-label="View Analysis History" aria-controls="history-panel" class="glass-ui p-2 rounded-full text-sm transition hover:border-emerald-400/50 hover:bg-white/10">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
@@ -48,7 +41,7 @@
             </div>
         </header>
 
-        <!-- Main Content -->
+        <!-- Main Content Area -->
         <main class="container mx-auto p-4 md:p-6 flex-grow flex flex-col items-center">
             <h1 class="text-4xl md:text-5xl font-extrabold text-white text-center mt-8">The Intelligent Product Analyst</h1>
             
@@ -73,36 +66,38 @@
                 <div id="placeholder-content" class="flex h-full justify-center items-center py-20">
                     <p class="text-white/60 text-lg text-center">Your detailed analysis will appear here.</p>
                 </div>
-                <div id="loading-skeleton" class="hidden animate-pulse">
-                    <!-- Loading skeleton layout -->
+                <!-- New Gen-Z Loader is integrated -->
+                <div id="loading-animation" class="hidden loader-container py-20">
+                    <div class="glitch-text" data-text="Analyzing vibes..."></div>
+                    <p class="text-white/50">The genie is thinking...</p>
                 </div>
                 <div id="result-content" class="hidden"></div>
             </section>
         </main>
         
-        <!-- Footer -->
-        <footer class="w-full text-center p-4 mt-auto">
+        <!-- Footer is preserved -->
+        <footer class="w-full text-center p-4 mt-auto flex-shrink-0">
             <p class="text-sm text-white/40">&copy; 2025 Eco Jinner. All rights reserved. <a href="#" id="report-issue-link" class="underline hover:text-white/60">Report an Issue</a></p>
         </footer>
     </div>
     
-    <!-- History Panel -->
+    <!-- History Panel is preserved -->
     <aside id="history-panel" class="fixed top-0 right-0 h-full w-full max-w-md glass-ui p-6 transform translate-x-full z-50 overflow-y-auto">
-        <!-- History panel content -->
+        <!-- History content will be populated by app.js -->
     </aside>
 
-    <!-- Settings Modal -->
+    <!-- Settings Modal and overlay are preserved -->
     <div id="settings-modal-overlay" class="fixed inset-0 bg-black/50 z-40 hidden modal-overlay"></div>
     <div id="settings-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md glass-ui p-6 rounded-2xl z-50 hidden">
-        <!-- Settings modal content -->
+        <!-- Settings content will be populated by app.js -->
     </div>
 
-    <!-- Notification Modal -->
+    <!-- Notification Modal is preserved -->
     <div id="notification-modal" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none">
         <p id="notification-message"></p>
     </div>
 
-    <!-- Application Logic -->
+    <!-- Link to your application logic -->
     <script src="app.js"></script>
 </body>
 </html>
