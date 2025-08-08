@@ -6,20 +6,17 @@
   <title>Eco-Friendly Shopping Assistant</title>
   <link rel="stylesheet" href="./style.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
 </head>
 <body>
   <header>
     <h1>Eco-Friendly Shopping Assistant 🌱</h1>
     <p>Find and choose eco-friendly products effortlessly.</p>
   </header>
-
   <!-- AI-Powered Eco Checker Section -->
   <section id="eco-checker" class="eco-checker-section" aria-label="AI Eco Checker">
     <div class="eco-checker-container">
       <h2>🤖 AI Eco Checker</h2>
       <p>Get instant sustainability insights for any product or ingredient</p>
-
       <div class="checker-input-group">
         <!-- Input for Product Title -->
         <input
@@ -51,13 +48,12 @@
       <div id="eco-input-help" class="input-help">
         Try searching for "cotton", "plastic bottle", or any product name
       </div>
+      <div id="eco-loading-spinner" style="display:none;"><div class="spinner"></div><span>Analyzing eco-friendliness...</span></div>
       <div id="ai-result" class="eco-results" aria-live="polite"></div>
     </div>
   </section>
-
   <main id="product-list">
     <h2 class="section-title">Featured Eco Products</h2>
-
     <!-- Example Eco Product Cards -->
     <div class="product-card" data-product-id="1">
       <img src="./assets/product1.jpg" alt="Eco Product 1" class="product-image">
@@ -67,11 +63,10 @@
         <div class="product-price">$12.99</div>
         <button class="suggestion-btn" data-product="Bamboo Toothbrush Set" aria-label="Get eco suggestions for Bamboo Toothbrush Set">
           <span aria-hidden="true">🌿</span>
-          <span>Get Eco Suggestions</span>
+          Get Eco Suggestions
         </button>
       </div>
     </div>
-
     <div class="product-card" data-product-id="2">
       <img src="./assets/product2.jpg" alt="Eco Product 2" class="product-image">
       <div class="product-info">
@@ -80,11 +75,10 @@
         <div class="product-price">$24.99</div>
         <button class="suggestion-btn" data-product="Reusable Water Bottle" aria-label="Get eco suggestions for Reusable Water Bottle">
           <span aria-hidden="true">🌿</span>
-          <span>Get Eco Suggestions</span>
+          Get Eco Suggestions
         </button>
       </div>
     </div>
-
     <div class="product-card" data-product-id="3">
       <img src="./assets/product3.jpg" alt="Eco Product 3" class="product-image">
       <div class="product-info">
@@ -93,41 +87,38 @@
         <div class="product-price">$15.99</div>
         <button class="suggestion-btn" data-product="Organic Cotton Tote Bag" aria-label="Get eco suggestions for Organic Cotton Tote Bag">
           <span aria-hidden="true">🌿</span>
-          <span>Get Eco Suggestions</span>
+          Get Eco Suggestions
         </button>
       </div>
     </div>
   </main>
-
   <!-- Accessible Popup (optional) -->
-  <div class="popup-overlay" id="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
+  <div id="popup" class="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="popup-title">
     <div class="popup-content">
       <div class="popup-header">
         <h3 id="popup-title">Eco Suggestions</h3>
-        <button class="popup-close" aria-label="Close suggestions popup" type="button">
+        <button class="popup-close" type="button" aria-label="Close suggestions popup">
           <span aria-hidden="true">×</span>
         </button>
       </div>
-      <div id="popup-body" class="popup-body"><!-- Dynamic content will be loaded here --></div>
+      <div class="popup-body" id="popup-body">
+        <!-- Dynamic content will be loaded here -->
+      </div>
       <div class="popup-actions">
-        <button type="button" class="btn-secondary" id="save-suggestion">Save for Later</button>
-        <button type="button" class="btn-primary" id="learn-more">Learn More</button>
+        <button id="save-suggestion" class="btn-secondary" type="button">Save for Later</button>
+        <button id="learn-more" class="btn-primary" type="button">Learn More</button>
       </div>
     </div>
   </div>
-
   <!-- Loading indicator (optional) -->
   <div id="loading-indicator" class="loading-indicator" aria-hidden="true">
     <div class="spinner"></div>
-    <span>Analyzing eco-friendliness...</span>
+    Analyzing eco-friendliness...
   </div>
-
   <footer>
     © 2025 Eco Assistant — Hackathon Demo
   </footer>
-
   <!-- Make sure this is last in body -->
   <script src="./app.js"></script>
 </body>
 </html>
-
