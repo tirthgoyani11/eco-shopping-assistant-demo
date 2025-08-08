@@ -21,6 +21,7 @@ const products = [
     certification: "USDA Biobased"
   }
 ];
+
 window.onload = () => {
   const list = document.getElementById('product-list');
   products.forEach(product => {
@@ -34,113 +35,73 @@ window.onload = () => {
     list.appendChild(card);
   });
 };
-window.showPopup = (name, fact, cert) => {
-  const popup = document.getElementById('popup');
-  popup.innerHTML = `${name}<br/>${fact}<br/>${cert}`;
-  popup.classList.add('visible');
-  setTimeout(() => {
-    popup.classList.remove('visible');
-  }, 2500);
-};
 
-const products = [
-  {
-    name: "EcoBrush Bamboo Toothbrush",
-    description: "A sustainable toothbrush made with biodegradable bamboo. Durable, plastic-free and vegan-friendly.",
-    eco_fact: "100% biodegradable bamboo handle.",
-    certification: "FSC Certified",
-    suggestion: "Try our RePaper Recycled Notebook for a plastic-free writing experience."
-  },
-  {
-    name: "GreenLiving Cotton Bag",
-    description: "Reusable shopping bag crafted from organic cotton. Perfect for eco-conscious shopping trips.",
-    eco_fact: "Reusable, organic cotton.",
-    certification: "GOTS Certified",
-    suggestion: "Pair with PureSip Glass Water Bottle for plastic-free hydration."
-  },
-  {
-    name: "RePaper Recycled Notebook",
-    description: "Notebook made from 100% recycled post-consumer paper. Great for students and writers.",
-    eco_fact: "Made from 100% post-consumer recycled paper.",
-    certification: "Blue Angel",
-    suggestion: "Switch to EcoBrush for eco-friendly oral care."
-  },
-  {
-    name: "PureSip Glass Water Bottle",
-    description: "Reusable, BPA-free glass bottle. Stay hydrated and ditch single-use plastics.",
-    eco_fact: "Reusable, BPA-free, and fully recyclable.",
-    certification: "USDA Biobased",
-    suggestion: "Carry with GreenLiving Cotton Bag for maximum sustainability."
-  }
-];
-window.onload = () => {
-  const list = document.getElementById('product-list');
-  products.forEach(product => {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.innerHTML = `
-      <img src="icon.png" class="badge" alt="eco badge" title="Eco Friendly!" />
-      <h3>${product.name}</h3>
-      <p style="font-size:1em; color:#444; margin-bottom:0.5em;">${product.description}</p>
-      <button onclick="showPopup('${product.name.replace(/'/g,"")}', '${product.eco_fact.replace(/'/g,"")}', '${product.certification.replace(/'/g,"")}', '${product.suggestion.replace(/'/g,"")}')">Why Eco?</button>
-    `;
-    list.appendChild(card);
-  });
-};
-window.showPopup = (name, fact, cert, suggestion) => {
+function showPopup(name) {
+  const product = products.find(p => p.name === name);
+  if (!product) return;
+  
+  const fact = product.eco_fact;
+  const cert = product.certification;
+  const suggestion = "Switch to eco-friendly options!";
+  
   const popup = document.getElementById('popup');
   popup.innerHTML = `
-    <strong>${name}</strong><br>
-    <span style="color:#148F43;font-weight:500;">${fact}</span><br>
-    <em>${cert}</em><br>
-    <hr style="margin:9px 0;">
+    <strong>${name}</strong><br/>
+    <span style="color:#148F43;font-weight:500;">${fact}</span><br/>
+    <em>${cert}</em><br/>
+    <hr style="margin:9px 0;"/>
     <span style="color:#2ecc71;">Suggestion: ${suggestion}</span>
   `;
   popup.classList.add('visible');
   setTimeout(() => {
     popup.classList.remove('visible');
   }, 3200);
-};
+}
+
 document.getElementById('analyze-btn').onclick = async function() {
   const title = document.getElementById('prod-title').value.trim();
   const desc = document.getElementById('prod-desc').value.trim();
+  
   if (!title && !desc) {
     document.getElementById('ai-result').innerText = "Please enter a product title or description.";
     return;
   }
+  
   document.getElementById('ai-result').innerText = "Gemini analyzing...";
-
+  
   try {
-    const apiKey = "AIzaSyCdBFIzpAfPfk7tW9IUOSihKU20XmuyrGA"; // Replace with your Gemini API key!
     const prompt = `Analyze the following product for eco-friendliness. Is it eco-friendly? If yes, state one main eco feature; if no, briefly explain why not:
 Title: ${title}
-Description: ${desc}`;
-
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+Description: ${desc}
+`;
+    
+    // Use secure proxy instead of direct API call
+    const response = await fetch('https://eco-shopping-assistant-demo.netlify.app/.netlify/functions/gemini-proxy', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
       })
     });
+    
     const data = await response.json();
     let aiMsg = "No response.";
+    
     if (
       data.candidates &&
       data.candidates[0] &&
-      data.candidates.content &&
-      data.candidates.content.parts &&
-      data.candidates.content.parts &&
-      data.candidates.content.parts.text
+      data.candidates[0].content &&
+      data.candidates[0].content.parts &&
+      data.candidates[0].content.parts[0] &&
+      data.candidates[0].content.parts[0].text
     ) {
-      aiMsg = data.candidates.content.parts.text;
+      aiMsg = data.candidates[0].content.parts[0].text;
     } else if (data.error) {
       aiMsg = "API error: " + data.error.message;
     }
+    
     document.getElementById('ai-result').innerText = aiMsg;
   } catch (e) {
-    document.getElementById('ai-result').innerText = "Error: " + (e.message || "Check API Key/Network");
+    document.getElementById('ai-result').innerText = "Error: " + (e.message || "Check Network Connection");
   }
 };
-
-
