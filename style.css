@@ -31,7 +31,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-light);
     /* --- THIS IS THE FIX --- */
-    /* Changed 'overflow: hidden' to 'overflow-x: hidden' to allow vertical scrolling */
+    /* Allows vertical scrolling while preventing horizontal scrollbars */
     overflow-x: hidden; 
 }
 
