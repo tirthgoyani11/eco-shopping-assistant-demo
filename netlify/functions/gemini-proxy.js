@@ -34,7 +34,7 @@ exports.handler = async function(event) {
     if (!title && !description) {
       return withCORS({ statusCode: 400, body: "Missing title or description" });
     }
-    const GEMINI_KEY = "AIzaSyCdBFIzpAfPfk7tW9IUOSihKU20XmuyrGA";
+    const GEMINI_KEY = "AIzaSyDEsa0-qw_olb30gI6Gypf60lBohGYw_XY";
     const prompt =
       `Analyze the following product for eco-friendliness. Is it eco-friendly? If yes, state one main eco feature; if no, briefly explain why not:\nTitle: ${title}\nDescription: ${description}`;
 
