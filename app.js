@@ -37,7 +37,8 @@ document.getElementById('analyze-btn').onclick = async function () {
         // If parsing fails, keep answer as raw result
       }
 
-      document.getElementById('ai-result').innerText = answer;
+     document.getElementById('ai-result').innerHTML = marked.parse(answer);
+
     } else {
       document.getElementById('ai-result').innerText = "Unknown error from AI backend.";
     }
