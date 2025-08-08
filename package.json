@@ -1,11 +1,10 @@
 {
-  "name": "eco-shopping-assistant-demo",
+  "name": "eco-jinner-function",
   "version": "1.0.0",
-  "description": "Eco Shopping Assistant with Gemini-powered AI proxy",
-  "main": "index.js",
+  "description": "Eco Jinner function with AI analysis and live web search.",
+  "main": "gemini-proxy.js",
   "license": "MIT",
   "dependencies": {
-    "node-fetch": "^2.6.7",
-    "cheerio": "^1.0.0-rc.12"
+    "axios": "^1.7.2"
   }
 }
