@@ -1,27 +1,57 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+    <!-- Meta Tags for Character Set, Viewport, and SEO -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Eco Jinner: Your AI-powered analyst for sustainability, healthy food, and cosmetics. Get instant analysis and recommendations for better products.">
+    
     <title>Eco Jinner - The Definitive Analyst</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+
+    <!-- External Libraries: Tailwind CSS for styling & Marked.js for Markdown -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- Embedded Stylesheet -->
     <style>
+        /* =================================================================
+           Eco Jinner - The Definitive Design System
+           ================================================================= */
+
+        /* --- 1. CSS Variables & Global Setup --- */
         :root {
+            --font-family: 'Inter', sans-serif;
             --accent-primary: #10b981; /* emerald-500 */
             --accent-secondary: #34d399; /* emerald-400 */
+            --bg-color: #020617; /* slate-950 */
+            --glass-bg: rgba(30, 41, 59, 0.4); /* slate-800 with opacity */
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #020617; /* slate-950 */
-            /* This is the correct setting for a scrollable page with a fixed background */
+
+        html {
+            font-family: var(--font-family);
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e5e7eb; /* gray-200 */
             overflow-x: hidden;
         }
-        
-        /* --- Aurora Background --- */
+
+        /* --- 2. Dynamic Aurora Background --- */
         .aurora-container {
             position: fixed;
             top: 0;
@@ -31,90 +61,199 @@
             z-index: -1;
             pointer-events: none;
         }
-        .aurora { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.3; }
-        .aurora-1 { width: 500px; height: 500px; background: #38bdf8; animation: aurora-anim 15s infinite alternate; }
-        .aurora-2 { width: 400px; height: 400px; background: #818cf8; animation: aurora-anim 20s infinite alternate-reverse; }
-        .aurora-3 { width: 300px; height: 300px; background: var(--accent-primary); animation: aurora-anim 25s infinite alternate; }
-        @keyframes aurora-anim {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            100% { transform: translate(calc(-50% + 20vw), calc(-50% + 20vh)) scale(1.5); }
+
+        .aurora {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.2;
         }
 
-        /* --- Refined Glass UI --- */
+        .aurora-1 {
+            width: 600px;
+            height: 600px;
+            background: #38bdf8; /* sky-500 */
+            animation: aurora-anim-1 20s infinite alternate;
+        }
+
+        .aurora-2 {
+            width: 500px;
+            height: 500px;
+            background: #818cf8; /* indigo-400 */
+            animation: aurora-anim-2 25s infinite alternate-reverse;
+        }
+
+        .aurora-3 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-primary);
+            animation: aurora-anim-3 30s infinite alternate;
+        }
+
+        @keyframes aurora-anim-1 {
+            0% { transform: translate(10vw, 10vh) scale(1); }
+            100% { transform: translate(40vw, 60vh) scale(1.2); }
+        }
+        @keyframes aurora-anim-2 {
+            0% { transform: translate(80vw, 20vh) scale(1); }
+            100% { transform: translate(20vw, 80vh) scale(0.8); }
+        }
+        @keyframes aurora-anim-3 {
+            0% { transform: translate(50vw, 90vh) scale(0.9); }
+            100% { transform: translate(10vw, 10vh) scale(1.1); }
+        }
+
+        /* --- 3. Core Layout & Glassmorphism --- */
         .glass-ui {
-            background: rgba(30, 41, 59, 0.4); /* slate-800 with opacity */
+            background: var(--glass-bg);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
             transition: background 0.3s, border 0.3s, box-shadow 0.3s;
         }
 
-        /* --- Command Bar --- */
-        .command-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 30px rgba(52, 211, 153, 0.4); }
-        .command-input { background: transparent; border: none; outline: none; color: white; width: 100%; }
+        /* --- 4. Component Styles --- */
+        .command-bar {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .command-bar:focus-within {
+            box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.5);
+            border-color: var(--accent-secondary);
+        }
+        .command-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            width: 100%;
+            font-size: 1.125rem; /* text-lg */
+        }
+        .category-btn.active {
+            background: rgba(16, 185, 129, 0.3); /* emerald-500 with opacity */
+            border-color: var(--accent-secondary);
+            color: white;
+        }
+        .recommendation-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            border: 1px solid var(--glass-border);
+        }
+        .recommendation-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            border-color: var(--accent-secondary);
+        }
+        .recommendation-card img {
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+        }
 
-        /* --- Animations & Transitions --- */
-        .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
-        .revealed { opacity: 1; transform: translateY(0); }
-        .recommendation-card img { aspect-ratio: 1 / 1; object-fit: cover; }
-        .recommendation-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .recommendation-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        /* --- 5. Animations & Transitions --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .loading-skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            50% { opacity: .5; }
+        }
 
-        /* --- Prose Styles --- */
-        .prose a { color: var(--accent-secondary); text-decoration: none; }
-        .prose a:hover { text-decoration: underline; }
-        .prose h1, .prose h2, .prose h3, .prose strong { color: inherit; }
+        /* --- 6. Prose & Custom Scrollbar --- */
+        .prose a {
+            color: var(--accent-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .prose a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        .prose h1, .prose h2, .prose h3, .prose strong {
+            color: inherit;
+        }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
     </style>
 </head>
-<body class="text-gray-200 antialiased">
+<body class="antialiased">
     <div class="aurora-container">
-        <div class="aurora aurora-1" style="top: 20%; left: 20%;"></div>
-        <div class="aurora aurora-2" style="top: 50%; left: 70%;"></div>
-        <div class="aurora aurora-3" style="top: 80%; left: 30%;"></div>
+        <div class="aurora aurora-1"></div>
+        <div class="aurora aurora-2"></div>
+        <div class="aurora aurora-3"></div>
     </div>
 
-    <!-- The main container is now a standard block element that will scroll naturally -->
+    <!-- Using semantic <header> for better document structure -->
+    <header class="text-center my-12 flex-shrink-0">
+        <h1 class="text-5xl md:text-6xl font-extrabold text-white">Eco Jinner</h1>
+        <p class="text-white/60 mt-2">The Intelligent Product Analyst</p>
+    </header>
+
+    <!-- Main content container -->
     <div class="container mx-auto p-4 md:p-6 min-h-screen flex flex-col">
-        <header class="text-center my-12 flex-shrink-0">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-white">Eco Jinner</h1>
-            <p class="text-white/60 mt-2">The Intelligent Product Analyst</p>
-        </header>
+        <!-- Using semantic <main> for the primary content area -->
+        <main class="w-full max-w-2xl mx-auto flex-shrink-0">
+            <!-- Using <section> with ARIA labels for better accessibility -->
+            <section aria-labelledby="analysis-section-title">
+                <h2 id="analysis-section-title" class="sr-only">Product Analysis Input</h2>
+                <div id="command-bar" role="search" class="command-bar glass-ui p-2 rounded-full flex items-center gap-2">
+                    <div id="category-display" class="flex-shrink-0 flex items-center gap-2 pl-3 text-white/80" aria-hidden="true"></div>
+                    <input type="text" id="prod-title" class="command-input text-lg" placeholder="Analyze a product..." aria-label="Product to analyze">
+                    <button id="analyze-btn" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition disabled:bg-emerald-400/50" aria-label="Submit for analysis">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </div>
+                <!-- Using ARIA radiogroup for better accessibility on category selection -->
+                <div id="category-selector" role="radiogroup" aria-labelledby="category-label" class="flex justify-center gap-3 mt-4">
+                    <span id="category-label" class="sr-only">Analysis Category</span>
+                    <button role="radio" aria-checked="true" class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50 active" data-category="eco">🌿 Eco-Friendly</button>
+                    <button role="radio" aria-checked="false" class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="food">🍎 Healthy Food</button>
+                    <button role="radio" aria-checked="false" class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="cosmetic">💄 Cosmetics</button>
+                </div>
+            </section>
+        </main>
 
-        <!-- Command Bar -->
-        <div class="w-full max-w-2xl mx-auto mb-8 flex-shrink-0">
-            <div id="command-bar" class="command-bar glass-ui p-2 rounded-full flex items-center gap-2">
-                <div id="category-display" class="flex-shrink-0 flex items-center gap-2 pl-3 text-white/80"></div>
-                <input type="text" id="prod-title" class="command-input text-lg" placeholder="Analyze a product...">
-                <button id="analyze-btn" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition disabled:bg-emerald-400/50">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </button>
-            </div>
-            <div id="category-selector" class="flex justify-center gap-3 mt-4">
-                <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="eco">🌿 Eco-Friendly</button>
-                <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="food">🍎 Healthy Food</button>
-                <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="cosmetic">💄 Cosmetics</button>
-            </div>
-        </div>
-
-        <!-- Result Section -->
-        <main id="result-container" class="flex-grow pb-12">
-            <!-- Placeholder -->
+        <!-- Result Section: aria-live announces changes to screen readers -->
+        <section id="result-container" aria-live="polite" class="flex-grow pb-12 w-full max-w-4xl mx-auto mt-12">
+            <!-- Initial placeholder content -->
             <div id="placeholder-content" class="flex h-full justify-center items-center">
                 <p class="text-white/60 text-lg text-center">Your detailed analysis will appear here.</p>
             </div>
-            <!-- Loading Skeleton -->
-            <div id="loading-skeleton" class="hidden animate-pulse">
-                <div class="flex flex-col md:flex-row gap-6"><div class="w-full md:w-1/3 h-48 bg-white/10 rounded-lg"></div><div class="w-full md:w-2/3 space-y-3"><div class="h-8 bg-white/10 rounded-md"></div><div class="h-5 bg-white/10 rounded-md w-3/4"></div><div class="h-20 bg-white/10 rounded-md mt-4"></div></div></div><hr class="border-white/10 my-6"><div class="h-8 bg-white/10 rounded-md w-1/2 mb-4"></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="h-48 bg-white/10 rounded-lg"></div><div class="h-48 bg-white/10 rounded-lg"></div><div class="h-48 bg-white/10 rounded-lg"></div></div>
+            <!-- Loading Skeleton shown during analysis -->
+            <div id="loading-skeleton" class="hidden loading-skeleton">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/3 h-48 bg-white/10 rounded-lg"></div>
+                    <div class="w-full md:w-2/3 space-y-3">
+                        <div class="h-8 bg-white/10 rounded-md"></div>
+                        <div class="h-5 bg-white/10 rounded-md w-3/4"></div>
+                        <div class="h-20 bg-white/10 rounded-md mt-4"></div>
+                    </div>
+                </div>
+                <hr class="border-white/10 my-8">
+                <div class="h-8 bg-white/10 rounded-md w-1/2 mb-6"></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="h-48 bg-white/10 rounded-lg"></div>
+                    <div class="h-48 bg-white/10 rounded-lg"></div>
+                    <div class="h-48 bg-white/10 rounded-lg"></div>
+                </div>
             </div>
-            <!-- Result Content -->
+            <!-- Container for dynamic result content -->
             <div id="result-content" class="hidden"></div>
-        </main>
+        </section>
     </div>
 
+    <!-- Embedded Javascript -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Element References ---
         const analyzeBtn = document.getElementById('analyze-btn');
         const prodTitleInput = document.getElementById('prod-title');
         const categorySelector = document.getElementById('category-selector');
@@ -123,46 +262,63 @@
         const loadingSkeleton = document.getElementById('loading-skeleton');
         const resultContent = document.getElementById('result-content');
 
-        let selectedCategory = null;
+        let selectedCategory = 'eco'; // Default category
 
+        /**
+         * Updates the active category display and state.
+         * @param {string} category - The selected category key (e.g., 'eco').
+         * @param {HTMLElement} buttonEl - The button element that was clicked.
+         */
         function updateCategory(category, buttonEl) {
             selectedCategory = category;
             const icon = buttonEl.textContent.split(' ')[0];
             const text = buttonEl.textContent.split(' ').slice(1).join(' ');
             categoryDisplay.innerHTML = `<span class="text-xl">${icon}</span> <span class="hidden md:inline">${text}</span>`;
             
+            // Update ARIA attributes and visual styles for all category buttons
             document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('bg-emerald-500/50', 'border-emerald-400');
+                btn.classList.remove('active');
+                btn.setAttribute('aria-checked', 'false');
             });
-            buttonEl.classList.add('bg-emerald-500/50', 'border-emerald-400');
+            buttonEl.classList.add('active');
+            buttonEl.setAttribute('aria-checked', 'true');
             prodTitleInput.focus();
         }
 
+        // --- Event Listeners ---
         categorySelector.addEventListener('click', (e) => {
             const btn = e.target.closest('.category-btn');
             if (btn) {
                 updateCategory(btn.dataset.category, btn);
             }
         });
-        
-        // Set default category
-        updateCategory('eco', document.querySelector('.category-btn[data-category="eco"]'));
 
+        /**
+         * Main analysis handler. Fetches data from the backend and renders it.
+         */
         async function handleAnalysis() {
             const title = prodTitleInput.value.trim();
-            if (!title) { alert("Please enter a product name."); return; }
-            if (!selectedCategory) { alert("Please select a category."); return; }
+            if (!title) {
+                alert("Please enter a product name.");
+                return;
+            }
+            if (!selectedCategory) {
+                alert("Please select a category.");
+                return;
+            }
 
+            // Update UI to show loading state
             analyzeBtn.disabled = true;
             placeholderContent.classList.add('hidden');
             resultContent.classList.add('hidden');
             loadingSkeleton.classList.remove('hidden');
 
             try {
+                // Fetch analysis from the serverless function
                 const response = await fetch('/.netlify/functions/gemini-proxy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ category: selectedCategory, title, description: "" }),
+                    body: JSON.stringify({ category: selectedCategory, title }),
                 });
 
                 if (!response.ok) {
@@ -174,9 +330,11 @@
                 renderResults(data);
 
             } catch (e) {
-                placeholderContent.innerHTML = `<p class="text-red-400 text-center"><strong>Request Failed:</strong><br>${e.message}</p>`;
-                placeholderContent.classList.remove('hidden');
+                // Display error message in the result container
+                resultContent.innerHTML = `<div class="glass-ui p-6 rounded-2xl text-center"><p class="text-red-400"><strong>Request Failed:</strong><br>${e.message}</p></div>`;
+                resultContent.classList.remove('hidden');
             } finally {
+                // Reset UI from loading state
                 analyzeBtn.disabled = false;
                 loadingSkeleton.classList.add('hidden');
             }
@@ -189,40 +347,53 @@
             }
         });
 
+        /**
+         * Renders the analysis results to the DOM.
+         * @param {object} data - The analysis data from the backend.
+         */
         function renderResults(data) {
             resultContent.innerHTML = `
-                <div class="reveal glass-ui p-6 rounded-2xl">
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <div class="md:w-1/3 flex-shrink-0"><img src="${data.productImage}" alt="${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image+Not+Found';"></div>
-                        <div class="md:w-2/3">
-                            <h2 class="text-3xl font-bold text-white">${data.productName}</h2>
-                            <p class="text-lg font-semibold ${data.isRecommended ? 'text-emerald-400' : 'text-red-400'} mb-4">${data.verdict}</p>
-                            <div class="prose max-w-none text-white/80">${marked.parse(data.summary)}</div>
+                <article class="reveal">
+                    <div class="glass-ui p-6 rounded-2xl">
+                        <div class="flex flex-col md:flex-row gap-8">
+                            <div class="md:w-1/3 flex-shrink-0">
+                                <img src="${data.productImage}" alt="Image of ${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image+Not+Found'; this.onerror=null;">
+                            </div>
+                            <div class="md:w-2/3">
+                                <h2 class="text-3xl font-bold text-white">${data.productName}</h2>
+                                <p class="text-lg font-semibold ${data.isRecommended ? 'text-emerald-400' : 'text-red-400'} my-4">${data.verdict}</p>
+                                <div class="prose max-w-none text-white/80">${marked.parse(data.summary)}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="reveal mt-6" style="transition-delay: 200ms;">
-                    <h3 class="text-2xl font-bold text-white mb-4 ml-2">${data.recommendations.title}</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </article>
+                <section class="reveal mt-12" style="transition-delay: 200ms;">
+                    <h3 class="text-2xl font-bold text-white mb-6 ml-2">${data.recommendations.title}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         ${data.recommendations.items.map((item, index) => `
                             <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${300 + index * 100}ms;">
-                                <img src="${item.image}" alt="${item.name}" class="w-full h-40 rounded-md mb-3" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image';">
+                                <img src="${item.image}" alt="${item.name}" class="w-full h-48 rounded-md mb-4" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image'; this.onerror=null;">
                                 <h4 class="font-bold text-white flex-grow">${item.name}</h4>
-                                <p class="text-sm text-white/60 mb-3 flex-grow">${item.description}</p>
+                                <p class="text-sm text-white/60 my-3 flex-grow">${item.description}</p>
                                 <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="mt-auto block text-center w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-600 transition">
                                     View Product
                                 </a>
                             </div>
                         `).join('')}
                     </div>
-                </div>
+                </section>
             `;
             resultContent.classList.remove('hidden');
-            // Trigger reveal animations
+            
+            // Trigger reveal animations for a smooth entry
             setTimeout(() => {
                 document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed'));
             }, 10);
         }
+
+        // --- Initial Setup ---
+        // Set the default category on page load
+        updateCategory('eco', document.querySelector('.category-btn[data-category="eco"]'));
     });
     </script>
 </body>
