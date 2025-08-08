@@ -51,28 +51,16 @@ exports.handler = async function(event) {
             Title: ${title}
         `;
 
-        const GEMINI_MODEL_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
-
-        let geminiAnalystResponse;
-        try {
-            geminiAnalystResponse = await axios.post(
-                GEMINI_MODEL_URL,
-                { contents: [{ parts: [{ text: analystPrompt }] }] }
-            );
-        } catch (error) {
-            console.error('[Gemini Analyst] API error!', error.response ? error.response.data : error.message);
-            throw error;
-        }
-        const analystResult = JSON.parse(
-            geminiAnalystResponse.data.candidates[0].content.parts.text
-                .replace(/```
-                .replace(/```/g, "")
-                .trim()
+        const geminiAnalystResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+            { contents: [{ parts: [{ text: analystPrompt }] }] }
         );
+        const analystResult = JSON.parse(geminiAnalystResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim());
 
         // --- Step 2: The Image Scouts (Parallel, Fast Search) ---
         const productScoutPromise = getGoogleImage(analystResult.productName, SERPER_KEY);
         const recommendationScoutPromises = (analystResult.scoutKeywords || []).map(keyword => getGoogleImage(keyword, SERPER_KEY));
+        
         const [productImage, ...recommendationImages] = await Promise.all([productScoutPromise, ...recommendationScoutPromises]);
 
         // --- Step 3: The AI Decorator (Final Polish) ---
@@ -94,23 +82,12 @@ exports.handler = async function(event) {
             ${JSON.stringify(analystResult.scoutKeywords)}
         `;
 
-        let geminiDecoratorResponse;
-        try {
-            geminiDecoratorResponse = await axios.post(
-                GEMINI_MODEL_URL,
-                { contents: [{ parts: [{ text: decoratorPrompt }] }] }
-            );
-        } catch (error) {
-            console.error('[Gemini Decorator] API error!', error.response ? error.response.data : error.message);
-            throw error;
-        }
-        const decoratedItems = JSON.parse(
-            geminiDecoratorResponse.data.candidates[0].content.parts.text
-                .replace(/```
-                .replace(/```/g, "")
-                .trim()
-        ).items;
-
+        const geminiDecoratorResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+            { contents: [{ parts: [{ text: decoratorPrompt }] }] }
+        );
+        const decoratedItems = JSON.parse(geminiDecoratorResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim()).items;
+        
         // Combine the decorated text with the reliable images
         const finalItems = decoratedItems.map((item, index) => ({
             ...item,
@@ -132,6 +109,7 @@ exports.handler = async function(event) {
             headers: { "Access-Control-Allow-Origin": "*" },
             body: JSON.stringify(finalResponse),
         };
+
     } catch (e) {
         console.error("Backend Error:", e.response ? e.response.data : e.message);
         return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + (e.response ? (e.response.data.error ? e.response.data.error.message : JSON.stringify(e.response.data)) : e.message) }) };
