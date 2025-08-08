@@ -1,7 +1,6 @@
 /* =================================================================
    Eco Jinner - Definitive Stylesheet (v11 - Complete)
    ================================================================= */
-
 /* --- 1. CSS Variables & Global Setup --- */
 :root {
     --accent-primary: #10b981;
@@ -11,18 +10,15 @@
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
-
 html {
     scroll-behavior: smooth;
 }
-
 body { 
     font-family: 'Inter', sans-serif; 
     background-color: var(--bg-color);
     color: #e2e8f0; /* slate-200 */
     overflow-x: hidden;
 }
-
 /* --- 2. 3D Canvas & Core Layout --- */
 #bg-canvas {
     position: fixed;
@@ -33,7 +29,6 @@ body {
     z-index: -1;
     opacity: 0.5;
 }
-
 .glass-ui {
     background: var(--glass-bg);
     backdrop-filter: blur(24px);
@@ -41,7 +36,6 @@ body {
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
 }
-
 /* --- 3. Navigation & Header --- */
 .nav-link {
     position: relative;
@@ -71,7 +65,6 @@ body {
     transform: scaleX(1);
     transform-origin: bottom left;
 }
-
 .control-btn {
     padding: 0.5rem; /* 8px */
     border-radius: 9999px; /* rounded-full */
@@ -82,17 +75,14 @@ body {
     background-color: rgba(255, 255, 255, 0.1);
     border-color: var(--accent-secondary);
 }
-
 /* --- 4. Component Styles --- */
 .command-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.4); border-color: var(--accent-secondary); }
 .command-input { background: transparent; border: none; outline: none; color: white; width: 100%; }
-
 .category-btn.active {
     background: rgba(16, 185, 129, 0.3);
     border-color: var(--accent-secondary);
 }
-
 .recommendation-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     border: 1px solid var(--glass-border);
@@ -106,7 +96,6 @@ body {
     aspect-ratio: 1 / 1;
     object-fit: cover;
 }
-
 /* --- 5. Gen-Z Loading Animation --- */
 .loader-container {
     display: flex;
@@ -145,7 +134,6 @@ body {
     text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
     animation: glitch-anim-2 1s infinite linear alternate-reverse;
 }
-
 @keyframes glitch-cycle {
     0% { content: 'Analyzing vibes...'; }
     25% { content: 'Checking facts...'; }
@@ -153,17 +141,14 @@ body {
     75% { content: 'Finalizing verdict...'; }
     100% { content: 'Almost there...'; }
 }
-
 @keyframes glitch-anim-1 {
     0% { clip: rect(42px, 9999px, 44px, 0); }
     100% { clip: rect(2px, 9999px, 92px, 0); }
 }
-
 @keyframes glitch-anim-2 {
     0% { clip: rect(12px, 9999px, 99px, 0); }
     100% { clip: rect(1px, 9999px, 48px, 0); }
 }
-
 /* --- 6. Staggered Result Animation --- */
 .reveal {
     opacity: 0;
@@ -174,7 +159,6 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
-
 /* --- 7. Panels & Modals --- */
 #history-panel, #confirm-modal, #confirm-modal-overlay, #mobile-menu {
     transition: all 0.3s ease-in-out;
@@ -188,12 +172,10 @@ body {
 .modal-overlay {
     backdrop-filter: blur(4px);
 }
-
 /* --- 8. Notification Modal --- */
 #notification-modal {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
-
 /* --- 9. Discover Page Styles --- */
 .filter-btn {
     background-color: rgba(255, 255, 255, 0.05);
@@ -209,7 +191,6 @@ body {
     color: white;
     border-color: var(--accent-primary);
 }
-
 .discover-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -217,7 +198,6 @@ body {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-
 .hero-glass {
     background: linear-gradient(110deg, #059669cc, #22d3eed1 85%);
     box-shadow: 0 8px 32px 0 #05966955;
@@ -257,7 +237,3 @@ body {
     .hero-glass { padding: 1.5rem; }
     .learn-card { padding: 1rem; }
 }
-
-.learn-card { opacity: 0; transform: translateY(25px); transition: all .4s; }
-.learn-card.visible { opacity: 1; transform: none; }
-
