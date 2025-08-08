@@ -1,10 +1,10 @@
 {
-  "name": "eco-jinner-function",
-  "version": "3.0.0",
-  "description": "The serverless backend for the Eco Jinner AI Analyst.",
+  "name": "eco-jinner-professional-function",
+  "version": "5.0.0",
+  "description": "Eco Jinner function with a hybrid AI and live web search algorithm.",
   "main": "gemini-proxy.js",
   "license": "MIT",
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "axios": "^1.7.2"
   }
 }
