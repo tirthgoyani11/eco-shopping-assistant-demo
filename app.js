@@ -2,12 +2,6 @@
  * =================================================================
  * Eco Jinner - Definitive Application Logic (app.js)
  * =================================================================
- * This script handles all client-side logic, including:
- * - 3D background rendering with Three.js
- * - User interactions and event handling
- * - API calls to the backend for AI analysis
- * - Dynamic rendering of results with animations
- * - Management of features like history, settings, and notifications
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,14 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-
         const geometry = new THREE.IcosahedronGeometry(1.5, 0);
         const material = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
         const shape = new THREE.Mesh(geometry, material);
         scene.add(shape);
-
         camera.position.z = 5;
-
         const animate3D = () => {
             requestAnimationFrame(animate3D);
             shape.rotation.x += 0.001;
@@ -32,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderer.render(scene, camera);
         };
         animate3D();
-
         window.addEventListener('resize', () => {
             renderer.setSize(window.innerWidth, window.innerHeight);
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -51,12 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
         resultContent: document.getElementById('result-content'),
         historyBtn: document.getElementById('history-btn'),
         historyPanel: document.getElementById('history-panel'),
-        settingsBtn: document.getElementById('settings-btn'),
-        settingsModal: document.getElementById('settings-modal'),
-        settingsOverlay: document.getElementById('settings-modal-overlay'),
-        reportIssueLink: document.getElementById('report-issue-link'),
+        closeHistoryBtn: document.getElementById('close-history-btn'),
+        clearHistoryBtn: document.getElementById('clear-history-btn'),
+        historyList: document.getElementById('history-list'),
         notificationModal: document.getElementById('notification-modal'),
         notificationMessage: document.getElementById('notification-message'),
+        confirmModal: document.getElementById('confirm-modal'),
+        confirmModalOverlay: document.getElementById('confirm-modal-overlay'),
+        confirmModalCancel: document.getElementById('confirm-modal-cancel'),
+        confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
     };
 
     // --- 3. State Management ---
@@ -65,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         history: JSON.parse(localStorage.getItem('ecoJinnerHistory')) || [],
     };
 
-    // --- 4. Core Functions ---
+    // --- 4. Core & UI Functions ---
 
     const updateCategory = (category, buttonEl) => {
         selectedCategory = category;
@@ -91,6 +84,24 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.notificationModal.classList.add('opacity-0', 'translate-y-10');
         }, 3000);
     };
+    
+    const toggleModal = (modal, show) => {
+        const overlay = document.getElementById(modal.id + '-overlay');
+        if (show) {
+            modal.classList.remove('hidden');
+            if (overlay) overlay.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+            if (overlay) overlay.classList.add('hidden');
+        }
+    };
+    
+    const togglePanel = (panel, show) => {
+        if (show) panel.classList.remove('translate-x-full');
+        else panel.classList.add('translate-x-full');
+    };
+
+    // --- 5. Main Analysis Logic ---
 
     const handleAnalysis = async () => {
         const title = elements.prodTitleInput.value.trim();
@@ -98,10 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification("Please enter a product name.", 'error');
             return;
         }
-
         elements.analyzeBtn.disabled = true;
         elements.placeholderContent.classList.add('hidden');
-        elements.resultContent.innerHTML = '';
         elements.resultContent.classList.add('hidden');
         elements.loadingAnimation.classList.remove('hidden');
 
@@ -160,7 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed')), 10);
     };
 
-    // --- 5. Feature-Specific Functions ---
+    // --- 6. History Panel Logic ---
+
     const saveToHistory = (title, category, resultData) => {
         const historyEntry = { id: Date.now(), title, category, resultData };
         state.history.unshift(historyEntry);
@@ -170,37 +180,63 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderHistory = () => {
-        if (!elements.historyPanel) return;
+        elements.clearHistoryBtn.disabled = state.history.length === 0;
         if (state.history.length === 0) {
-            elements.historyPanel.innerHTML = `<div class="p-4 text-center text-white/60">No past analyses found.</div>`;
+            elements.historyList.innerHTML = `<div class="p-4 text-center text-white/60">No past analyses found.</div>`;
             return;
         }
-        elements.historyPanel.innerHTML = state.history.map(item => `
-            <div class="history-item p-4 hover:bg-white/5 transition cursor-pointer" data-history-id="${item.id}">
-                <p class="font-bold text-white">${item.title}</p>
+        elements.historyList.innerHTML = state.history.map(item => `
+            <div class="history-item p-4 -mx-4 rounded-lg hover:bg-white/5 transition cursor-pointer" data-history-id="${item.id}">
+                <p class="font-bold text-white truncate">${item.title}</p>
                 <p class="text-sm text-white/60">Category: ${item.category}</p>
             </div>`).join('');
     };
+    
+    const handleHistoryClick = (e) => {
+        const itemEl = e.target.closest('.history-item');
+        if (itemEl) {
+            const id = Number(itemEl.dataset.historyId);
+            const historyItem = state.history.find(item => item.id === id);
+            if (historyItem) {
+                elements.placeholderContent.classList.add('hidden');
+                elements.loadingAnimation.classList.add('hidden');
+                renderResults(historyItem.resultData);
+                togglePanel(elements.historyPanel, false);
+            }
+        }
+    };
+    
+    const clearHistory = () => {
+        const onConfirm = () => {
+            state.history = [];
+            localStorage.removeItem('ecoJinnerHistory');
+            renderHistory();
+            showNotification("History cleared successfully.");
+            toggleModal(elements.confirmModal, false);
+        };
+        const onCancel = () => toggleModal(elements.confirmModal, false);
 
-    const togglePanel = (panel, show) => {
-        if (show) panel.classList.remove('translate-x-full');
-        else panel.classList.add('translate-x-full');
+        toggleModal(elements.confirmModal, true);
+        elements.confirmModalConfirm.onclick = onConfirm;
+        elements.confirmModalCancel.onclick = onCancel;
+        elements.confirmModalOverlay.onclick = onCancel;
     };
 
-    // --- 6. Event Listeners ---
+    // --- 7. Event Listeners ---
     elements.analyzeBtn.addEventListener('click', handleAnalysis);
-    elements.prodTitleInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') handleAnalysis();
-    });
+    elements.prodTitleInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleAnalysis(); });
     elements.categorySelector.addEventListener('click', e => {
         const btn = e.target.closest('.category-btn');
         if (btn) updateCategory(btn.dataset.category, btn);
     });
+    
+    // History Panel Listeners
     elements.historyBtn.addEventListener('click', () => togglePanel(elements.historyPanel, true));
-    // Add a close button inside the history panel and an event listener for it
-    // elements.settingsBtn.addEventListener('click', ...);
+    elements.closeHistoryBtn.addEventListener('click', () => togglePanel(elements.historyPanel, false));
+    elements.historyList.addEventListener('click', handleHistoryClick);
+    elements.clearHistoryBtn.addEventListener('click', clearHistory);
 
-    // --- 7. Initial Application Setup ---
+    // --- 8. Initial Application Setup ---
     const initializeApp = () => {
         updateCategory('eco', document.querySelector('.category-btn[data-category="eco"]'));
         renderHistory();
