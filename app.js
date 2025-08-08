@@ -329,3 +329,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
+/**
+ * =================================================================
+ * Eco Jinner - Definitive Application Logic (v12 - Bug Fix)
+ * =================================================================
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (all other code remains the same) ...
+
+    // --- 6. Main Analysis Logic ---
+    const handleAnalysis = async () => {
+        const title = elements.prodTitleInput.value.trim();
+        if (!title) {
+            showNotification("Please enter a product name.", 'error');
+            return;
+        }
+        elements.analyzeBtn.disabled = true;
+        elements.placeholderContent.classList.add('hidden');
+        
+        // --- BUG FIX ---
+        // Explicitly clear previous results and hide the container
+        elements.resultContent.innerHTML = ''; 
+        elements.resultContent.classList.add('hidden');
+        
+        elements.loadingAnimation.classList.remove('hidden');
+
+        try {
+            // ... (rest of the analysis logic remains the same) ...
+        } catch (e) {
+            // ... (error handling remains the same) ...
+        } finally {
+            // ... (finally block remains the same) ...
+        }
+    };
+    
+    // ... (rest of the file remains the same) ...
+});
+
