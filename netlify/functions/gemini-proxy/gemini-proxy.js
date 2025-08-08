@@ -1,14 +1,21 @@
 const fetch = require("node-fetch");
 
+// The Verifier: Checks if a URL is live and accessible.
+async function verifyLink(url) {
+    if (!url || !url.startsWith('http')) return false;
+    try {
+        const response = await fetch(url, { method: 'HEAD', timeout: 3500 });
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}
+
 exports.handler = async function(event) {
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
+            headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" },
             body: "",
         };
     }
@@ -27,7 +34,6 @@ exports.handler = async function(event) {
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
-        // --- NEW, STRICTER PROMPT ---
         let systemInstructions = '';
         if (category === 'eco') {
             systemInstructions = `You are an Eco-Friendly product analyst for the Indian market.`;
@@ -40,13 +46,11 @@ exports.handler = async function(event) {
         const prompt = `
             ${systemInstructions}
 
-            **Task:** Analyze the user's product. Find a representative image for the user's product and for each recommendation. For each recommendation, you MUST generate a Google search link that is strictly filtered for India and excludes sponsored results. Return a single, clean JSON object.
+            **Task:** Analyze the user's product. Find a representative image for the user's product and for each recommendation. For each recommendation, you MUST provide a direct link to a product page on a major Indian e-commerce site (like Amazon.in, Flipkart, Myntra, Nykaa, BigBasket). Also provide a Google search link as a fallback. Return a single, clean JSON object.
 
             **Link Generation Rules (CRITICAL):**
-            1.  The "link" field MUST be a valid Google search URL.
-            2.  To guarantee the search is for **India only**, you MUST include the parameter "&cr=countryIN" in the URL.
-            3.  To **remove sponsored ads**, you MUST add "-sponsored" to the end of the search query (before the country parameter).
-            4.  **Correct Example:** "https://www.google.com/search?q=stainless+steel+bottle+-sponsored&cr=countryIN"
+            1.  "directLink": Use your internal knowledge to find a specific, working product page URL.
+            2.  "googleSearchLink": A fallback Google search URL for the product.
 
             **JSON Output Structure (MUST follow this exactly):**
             \`\`\`json
@@ -63,7 +67,8 @@ exports.handler = async function(event) {
                     "name": "Recommended Product 1",
                     "description": "A short, compelling description.",
                     "image": "A valid, direct URL to a high-quality image of the recommendation.",
-                    "link": "A valid Google search URL following all the rules above."
+                    "directLink": "A valid, direct product page URL from a top Indian site.",
+                    "googleSearchLink": "A valid Google search URL for this product."
                   }
                 ]
               }
@@ -75,13 +80,23 @@ exports.handler = async function(event) {
             Description: ${description || "No description provided"}
         `;
 
-        const modelToUse = "gemini-2.0-flash";
+        // Using a more advanced model for better results
+        const modelToUse = "gemini-1.5-pro-latest";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
 
         const response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                // Add safety settings to prevent content blocking
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                ],
+            })
         });
 
         if (!response.ok) {
@@ -93,6 +108,17 @@ exports.handler = async function(event) {
         const rawText = data.candidates[0].content.parts[0].text;
         
         const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
+
+        // --- Verify and Finalize Links ---
+        const verifiedItems = await Promise.all(jsonResponse.recommendations.items.map(async (item) => {
+            const isDirectLinkValid = await verifyLink(item.directLink);
+            return {
+                ...item,
+                link: isDirectLinkValid ? item.directLink : item.googleSearchLink, // Use the final, verified link
+            };
+        }));
+
+        jsonResponse.recommendations.items = verifiedItems;
 
         return {
             statusCode: 200,
