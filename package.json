@@ -1,4 +1,10 @@
 {
-  "name": "eco-jinner-final-debug-function",
-  "version": "7.0.0"
+  "name": "eco-jinner-professional-function",
+  "version": "6.0.0",
+  "description": "Eco Jinner function with a hybrid AI and live image search algorithm.",
+  "main": "gemini-proxy.js",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.2"
+  }
 }
