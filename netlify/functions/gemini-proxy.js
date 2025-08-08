@@ -27,18 +27,34 @@ exports.handler = async function(event) {
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
+        // --- NEW PROMPT WITH INDIAN E-COMMERCE INSTRUCTIONS ---
         const prompt = `
-            You are "Eco Jinner Pro," a sustainability analyst. Analyze the following product and return a structured JSON object.
+            You are "Eco Jinner Pro," a sustainability analyst with a focus on the Indian market. Your task is to analyze the provided product information and return a structured JSON object.
+
+            **Analysis Instructions:**
+            1.  **Overall Score:** Provide an "overallScore" from 0 to 100.
+            2.  **Category Scores:** Provide scores (0-100) for "materials", "manufacturing", and "endOfLife".
+            3.  **Verdict:** Provide a short, one-sentence "verdict".
+            4.  **Summary:** Write a detailed "summary" in Markdown.
+            5.  **Recommendations (IMPORTANT INDIAN FOCUS):**
+                * Your primary goal is to provide **working, direct shopping links** from e-commerce sites that are popular in **India** (e.g., **Flipkart, Amazon.in, Myntra, Nykaa, Tata CLiQ, Brown Living, Amala Earth**).
+                * Prioritize products from companies that sell directly in India.
+                * If the score is below 70, provide an "alternatives" array with objects containing a "name" and a valid "link".
+                * If the score is 70 or above, provide a "shopping" array with objects containing a "name" and a valid "link".
+                * If applicable, provide a "diy" object with a "title" and "steps" array.
 
             **JSON Output Structure (MUST follow this exactly, no extra text):**
             \`\`\`json
             {
-              "overallScore": 85,
-              "scores": { "materials": 90, "manufacturing": 80, "endOfLife": 85 },
-              "verdict": "A solid, sustainable option.",
-              "summary": "This product is a great choice because...",
+              "overallScore": 78,
+              "scores": { "materials": 80, "manufacturing": 70, "endOfLife": 85 },
+              "verdict": "A good sustainable choice available in India.",
+              "summary": "This product shows strong eco-credentials...",
               "recommendations": {
-                "shopping": [ { "name": "Example Product", "link": "https://www.example.com" } ]
+                "shopping": [
+                  { "name": "Brand X Khadi Shirt", "link": "https://www.flipkart.com/..." },
+                  { "name": "Brand Y Jute Bag", "link": "https://www.amazon.in/..." }
+                ]
               }
             }
             \`\`\`
@@ -66,22 +82,18 @@ exports.handler = async function(event) {
         const data = await response.json();
         const rawText = data.candidates[0].content.parts[0].text;
 
-        // --- THIS IS THE NEW BULLETPROOF LOGIC ---
+        // Bulletproof parsing logic
         try {
-            // Attempt to parse the cleaned text as JSON
             const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
-            // If successful, return the structured JSON
             return {
                 statusCode: 200,
                 headers: { "Access-Control-Allow-Origin": "*" },
                 body: JSON.stringify(jsonResponse)
             };
         } catch (parsingError) {
-            // If parsing fails, DO NOT CRASH.
-            console.error("JSON parsing failed. The AI likely returned malformed text.", parsingError);
-            // Return the raw text as a fallback so we can see what went wrong.
+            console.error("JSON parsing failed. AI returned malformed text:", rawText);
             return {
-                statusCode: 200, // Still a success, because we got a response from the AI
+                statusCode: 200,
                 headers: { "Access-Control-Allow-Origin": "*" },
                 body: JSON.stringify({
                     isError: true,
