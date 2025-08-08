@@ -27,20 +27,26 @@ exports.handler = async function(event) {
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
-        // --- Refined, Single-Call Prompt ---
+        // --- NEW PROMPT WITH GOOGLE SEARCH INSTRUCTIONS ---
         let systemInstructions = '';
         if (category === 'eco') {
-            systemInstructions = `You are an Eco-Friendly product analyst for the Indian market. Recommendations must be from Indian e-commerce sites (Flipkart, Amazon.in, etc.).`;
+            systemInstructions = `You are an Eco-Friendly product analyst for the Indian market. Your recommendations should be for sustainable alternatives.`;
         } else if (category === 'food') {
-            systemInstructions = `You are a Health Food analyst for the Indian market. Recommendations must be from Indian grocery sites (BigBasket, Blinkit, etc.).`;
+            systemInstructions = `You are a Health Food analyst for the Indian market. Your recommendations should be for healthy food options.`;
         } else if (category === 'cosmetic') {
-            systemInstructions = `You are a Safe Cosmetics analyst for the Indian market. Recommendations must be from Indian beauty sites (Nykaa, Myntra, etc.).`;
+            systemInstructions = `You are a Safe Cosmetics analyst for the Indian market. Your recommendations should be for products with safe, clean ingredients.`;
         }
 
         const prompt = `
             ${systemInstructions}
 
-            **Task:** Analyze the user's product. Find a representative image for the user's product and for each of your recommendations. Return a single, clean JSON object. Do not include any text, notes, or markdown formatting outside the final JSON object.
+            **Task:** Analyze the user's product. Find a representative image for the user's product and for each recommendation. For each recommendation, you MUST generate a Google search link. Return a single, clean JSON object.
+
+            **Link Generation Rules (VERY IMPORTANT):**
+            1.  The "link" field MUST be a valid Google search URL.
+            2.  The search query should be for the recommended product, targeted to the Indian market (e.g., add "buy online India").
+            3.  To avoid ads, you MUST add "-sponsored" to the end of the search query.
+            4.  Example Link Format: "https://www.google.com/search?q=stainless+steel+bottle+buy+online+india+-sponsored"
 
             **JSON Output Structure (MUST follow this exactly):**
             \`\`\`json
@@ -57,7 +63,7 @@ exports.handler = async function(event) {
                     "name": "Recommended Product 1",
                     "description": "A short, compelling description.",
                     "image": "A valid, direct URL to a high-quality image of the recommendation.",
-                    "link": "A valid, working URL to the product page."
+                    "link": "A valid Google search URL following the rules above."
                   }
                 ]
               }
@@ -85,27 +91,14 @@ exports.handler = async function(event) {
 
         const data = await response.json();
         const rawText = data.candidates[0].content.parts[0].text;
+        
+        const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // --- Bulletproof Parsing Logic ---
-        try {
-            const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
-            return {
-                statusCode: 200,
-                headers: { "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify(jsonResponse)
-            };
-        } catch (parsingError) {
-            // If parsing fails, DO NOT CRASH. Return the raw text as a fallback.
-            console.error("JSON parsing failed. AI returned malformed text:", rawText);
-            return {
-                statusCode: 200, // Still a success, because we got a response.
-                headers: { "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({
-                    isFallback: true,
-                    fallbackText: `The AI returned a response that could not be structured. Here is the raw text:\n\n---\n\n${rawText}`
-                })
-            };
-        }
+        return {
+            statusCode: 200,
+            headers: { "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify(jsonResponse)
+        };
 
     } catch (e) {
         console.error("Backend Error:", e);
