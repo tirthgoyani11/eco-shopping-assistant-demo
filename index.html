@@ -1,21 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eco-Friendly Shopping Assistant</title>
-  <link href="style.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <header>
     <h1>Eco-Friendly Shopping Assistant 🌱</h1>
     <p>Find and choose eco-friendly products effortlessly.</p>
   </header>
-  <main id="product-list"></main>
-  <div id="popup"></div>
+  
+  <main id="product-list">
+    <!-- Product cards will be dynamically generated here -->
+    <div class="product-card" data-product-id="1">
+      <img src="./assets/product1.jpg" alt="Eco Product 1" class="product-image">
+      <div class="product-info">
+        <h3 class="product-name">Bamboo Toothbrush Set</h3>
+        <p class="product-description">Biodegradable bamboo toothbrushes with soft bristles. Eco-friendly alternative to plastic toothbrushes.</p>
+        <div class="product-price">$12.99</div>
+        <button class="suggestion-btn" data-product="Bamboo Toothbrush Set">Get Eco Suggestions</button>
+      </div>
+    </div>
+    
+    <div class="product-card" data-product-id="2">
+      <img src="./assets/product2.jpg" alt="Eco Product 2" class="product-image">
+      <div class="product-info">
+        <h3 class="product-name">Reusable Water Bottle</h3>
+        <p class="product-description">Stainless steel insulated water bottle. Keeps drinks cold for 24hrs, hot for 12hrs. BPA-free.</p>
+        <div class="product-price">$24.99</div>
+        <button class="suggestion-btn" data-product="Reusable Water Bottle">Get Eco Suggestions</button>
+      </div>
+    </div>
+    
+    <div class="product-card" data-product-id="3">
+      <img src="./assets/product3.jpg" alt="Eco Product 3" class="product-image">
+      <div class="product-info">
+        <h3 class="product-name">Organic Cotton Tote Bag</h3>
+        <p class="product-description">100% organic cotton tote bag. Durable, washable, and perfect for grocery shopping. Reduces plastic waste.</p>
+        <div class="product-price">$15.99</div>
+        <button class="suggestion-btn" data-product="Organic Cotton Tote Bag">Get Eco Suggestions</button>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Popup for eco suggestions -->
+  <div id="popup" class="popup-overlay">
+    <div class="popup-content">
+      <span class="popup-close">&times;</span>
+      <h3 id="popup-title">Eco Suggestions</h3>
+      <div id="popup-body">
+        <!-- Dynamic content will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
   <footer style="text-align:center;margin:2em 0; color:#86ba90;">
     © 2025 Eco Assistant — Hackathon Demo
   </footer>
-  <script src="app.js"></script>
+  
+  <script src="./app.js"></script>
 </body>
 </html>
