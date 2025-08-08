@@ -1,137 +1,127 @@
-const fetch = require("node-fetch");
+const axios = require("axios");
 
-// The Verifier: Checks if a URL is live and accessible.
-async function verifyLink(url) {
-    if (!url || !url.startsWith('http')) return false;
+// --- The Web Scraper Function ---
+// This function takes a keyword and uses the Serper API to get real, live Google search results.
+async function getGoogleSearchResult(keyword, apiKey) {
     try {
-        const response = await fetch(url, { method: 'HEAD', timeout: 3500 });
-        return response.ok;
+        const response = await axios.post('https://google.serper.dev/search', {
+            q: `${keyword} buy online india -sponsored`,
+            gl: 'in', // Geolocation: India
+        }, {
+            headers: {
+                'X-API-KEY': apiKey,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Find the first organic (non-ad) result
+        const firstResult = response.data.organic.find(res => res.link);
+        if (!firstResult) return null;
+
+        // The AI will generate the image and description later
+        return {
+            name: firstResult.title,
+            link: firstResult.link
+        };
     } catch (error) {
-        return false;
+        console.error(`Web scraper failed for keyword: "${keyword}"`, error.response ? error.response.data : error.message);
+        return null;
     }
 }
 
+// --- The Main Handler ---
 exports.handler = async function(event) {
-    if (event.httpMethod === "OPTIONS") {
-        return {
-            statusCode: 204,
-            headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" },
-            body: "",
-        };
-    }
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
-    }
+    if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
 
     try {
         const body = JSON.parse(event.body || "{}");
         const { category, title, description } = body;
-
-        if (!title || !category) {
-            return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
-        }
+        if (!title || !category) return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
 
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
-        if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
+        const SERPER_KEY = process.env.SERPER_API_KEY;
+        if (!GEMINI_KEY || !SERPER_KEY) throw new Error("API keys are not configured.");
 
-        let systemInstructions = '';
-        if (category === 'eco') {
-            systemInstructions = `You are an Eco-Friendly product analyst for the Indian market.`;
-        } else if (category === 'food') {
-            systemInstructions = `You are a Health Food analyst for the Indian market.`;
-        } else if (category === 'cosmetic') {
-            systemInstructions = `You are a Safe Cosmetics analyst for the Indian market.`;
-        }
-
-        const prompt = `
-            ${systemInstructions}
-
-            **Task:** Analyze the user's product. Find a representative image for the user's product and for each recommendation. For each recommendation, you MUST provide a direct link to a product page on a major Indian e-commerce site (like Amazon.in, Flipkart, Myntra, Nykaa, BigBasket). Also provide a Google search link as a fallback. Return a single, clean JSON object.
-
-            **Link Generation Rules (CRITICAL):**
-            1.  "directLink": Use your internal knowledge to find a specific, working product page URL.
-            2.  "googleSearchLink": A fallback Google search URL for the product.
-
+        // --- Step 1: The AI Analyst ---
+        // The AI's only job is to analyze and generate a research plan (keywords).
+        const analystPrompt = `
+            You are a senior product analyst. Analyze the user's product and create a research plan.
             **JSON Output Structure (MUST follow this exactly):**
             \`\`\`json
             {
               "productName": "User's Product Name",
               "productImage": "A valid, direct URL to a high-quality image of the user's product.",
               "isRecommended": false,
-              "verdict": "A short, clear verdict on the product.",
+              "verdict": "A short, clear verdict.",
               "summary": "A detailed analysis in Markdown format.",
-              "recommendations": {
-                "title": "A relevant title for the recommendations.",
-                "items": [
-                  {
-                    "name": "Recommended Product 1",
-                    "description": "A short, compelling description.",
-                    "image": "A valid, direct URL to a high-quality image of the recommendation.",
-                    "directLink": "A valid, direct product page URL from a top Indian site.",
-                    "googleSearchLink": "A valid Google search URL for this product."
-                  }
-                ]
-              }
+              "recommendationsTitle": "Better, Eco-Friendly Alternatives",
+              "scoutKeywords": ["Stainless Steel Water Bottle", "Glass Water Bottle", "Copper Water Bottle"]
             }
             \`\`\`
-
             --- USER INPUT ---
+            Category: ${category}
             Title: ${title}
             Description: ${description || "No description provided"}
         `;
 
-        // Using a more advanced model for better results
-        const modelToUse = "gemini-1.5-pro-latest";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
-
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                // Add safety settings to prevent content blocking
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-                ],
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Gemini API Error: ${errorData.error.message}`);
-        }
-
-        const data = await response.json();
-        const rawText = data.candidates[0].content.parts[0].text;
+        const geminiResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+            { contents: [{ parts: [{ text: analystPrompt }] }] }
+        );
         
-        const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
+        const analystResult = JSON.parse(geminiResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // --- Verify and Finalize Links ---
-        const verifiedItems = await Promise.all(jsonResponse.recommendations.items.map(async (item) => {
-            const isDirectLinkValid = await verifyLink(item.directLink);
-            return {
-                ...item,
-                link: isDirectLinkValid ? item.directLink : item.googleSearchLink, // Use the final, verified link
-            };
-        }));
+        // --- Step 2: The Web Scrapers ---
+        // Run all Google searches in parallel for maximum speed.
+        const scoutKeywords = analystResult.scoutKeywords || [];
+        const searchPromises = scoutKeywords.map(keyword => getGoogleSearchResult(keyword, SERPER_KEY));
+        const searchResults = (await Promise.all(searchPromises)).filter(Boolean); // Filter out any failed searches
 
-        jsonResponse.recommendations.items = verifiedItems;
+        // --- Step 3: The AI Decorator (Final Polish) ---
+        // A final, quick AI call to add beautiful descriptions and images to our verified links.
+        const decoratorPrompt = `
+            You are a creative assistant. For each of the following products, find a high-quality image URL and write a short, compelling description.
+            **JSON Output Structure (MUST follow this exactly):**
+            \`\`\`json
+            {
+              "items": [
+                {
+                  "name": "Milton Thermosteel Bottle",
+                  "description": "Keeps your drinks hot or cold for hours, perfect for daily use.",
+                  "image": "https://example.com/image_of_milton_bottle.jpg",
+                  "link": "https://www.amazon.in/dp/B07922769T"
+                }
+              ]
+            }
+            \`\`\`
+            --- PRODUCT LIST ---
+            ${JSON.stringify(searchResults)}
+        `;
+
+        const decoratorResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+            { contents: [{ parts: [{ text: decoratorPrompt }] }] }
+        );
+
+        const finalItems = JSON.parse(decoratorResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim()).items;
+
+        // --- Final Assembly ---
+        const finalResponse = {
+            ...analystResult, // This includes productName, productImage, verdict, summary, etc.
+            recommendations: {
+                title: analystResult.recommendationsTitle,
+                items: finalItems,
+            },
+        };
 
         return {
             statusCode: 200,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(jsonResponse)
+            body: JSON.stringify(finalResponse),
         };
 
     } catch (e) {
-        console.error("Backend Error:", e);
-        return {
-            statusCode: 500,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ error: "An internal server error occurred: " + e.message })
-        };
+        console.error("Backend Error:", e.response ? e.response.data : e.message);
+        return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + (e.response ? e.response.data.error.message : e.message) }) };
     }
 };
