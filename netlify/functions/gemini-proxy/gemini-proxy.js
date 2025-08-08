@@ -49,7 +49,7 @@ exports.handler = async function(event) {
             Title: ${title}
         `;
 
-        // CORRECTED: Using the specific 'gemini-2.0-flash' model you provided.
+        // Using the exact model name you specified.
         const modelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
         
         const geminiAnalystResponse = await axios.post(
