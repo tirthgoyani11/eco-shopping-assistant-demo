@@ -2,6 +2,7 @@ const axios = require("axios");
 
 // --- The Image Scout Function ---
 // This uses the Serper API to get real, live Google Image search results.
+// No changes are needed here.
 async function getGoogleImage(keyword, apiKey) {
     try {
         const response = await axios.post('https://google.serper.dev/images', {
@@ -25,14 +26,16 @@ exports.handler = async function(event) {
 
     try {
         const body = JSON.parse(event.body || "{}");
-        const { category, title } = body;
-        if (!title || !category) return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+        // --- FIX 1: Accepting 'description' from the frontend instead of 'category' ---
+        const { title, description } = body;
+        if (!title) return { statusCode: 400, body: JSON.stringify({ error: "Title is required." }) };
 
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         const SERPER_KEY = process.env.SERPER_API_KEY;
         if (!GEMINI_KEY || !SERPER_KEY) throw new Error("API keys are not configured.");
 
         // --- Step 1: The AI Analyst (Fast Keyword Generation) ---
+        // --- FIX 2: Updated prompt to use 'description' ---
         const analystPrompt = `
             You are a senior product analyst. Analyze the user's product and create a research plan.
             **JSON Output Structure (MUST follow this exactly):**
@@ -47,23 +50,26 @@ exports.handler = async function(event) {
             }
             \`\`\`
             --- USER INPUT ---
-            Category: ${category}
             Title: ${title}
+            Description: ${description || 'No description provided.'}
         `;
 
         const geminiAnalystResponse = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
             { contents: [{ parts: [{ text: analystPrompt }] }] }
         );
-        const analystResult = JSON.parse(geminiAnalystResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim());
+        const analystResultText = geminiAnalystResponse.data.candidates[0].content.parts[0].text;
+        const analystResult = JSON.parse(analystResultText.replace(/```json/g, "").replace(/```/g, "").trim());
 
         // --- Step 2: The Image Scouts (Parallel, Fast Search) ---
+        // This part of the logic remains the same.
         const productScoutPromise = getGoogleImage(analystResult.productName, SERPER_KEY);
         const recommendationScoutPromises = (analystResult.scoutKeywords || []).map(keyword => getGoogleImage(keyword, SERPER_KEY));
         
         const [productImage, ...recommendationImages] = await Promise.all([productScoutPromise, ...recommendationScoutPromises]);
 
         // --- Step 3: The AI Decorator (Final Polish) ---
+        // This part of the logic remains the same.
         const decoratorPrompt = `
             You are a creative assistant. For each of the following keywords, write a short, compelling description and generate a reliable Google search link for buying it in India.
             **JSON Output Structure (MUST follow this exactly):**
@@ -86,9 +92,9 @@ exports.handler = async function(event) {
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
             { contents: [{ parts: [{ text: decoratorPrompt }] }] }
         );
-        const decoratedItems = JSON.parse(geminiDecoratorResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim()).items;
+        const decoratedItemsText = geminiDecoratorResponse.data.candidates[0].content.parts[0].text;
+        const decoratedItems = JSON.parse(decoratedItemsText.replace(/```json/g, "").replace(/```/g, "").trim()).items;
         
-        // Combine the decorated text with the reliable images
         const finalItems = decoratedItems.map((item, index) => ({
             ...item,
             image: recommendationImages[index]
@@ -103,15 +109,50 @@ exports.handler = async function(event) {
                 items: finalItems,
             },
         };
+        
+        // --- FIX 3: Format the rich data into a single Markdown string for the frontend ---
+        let markdownOutput = `## ${finalResponse.productName}\n\n`;
+        markdownOutput += `**Verdict:** ${finalResponse.verdict}\n\n`;
+        markdownOutput += `${finalResponse.summary}\n\n`;
+        markdownOutput += `### ${finalResponse.recommendations.title}\n\n`;
+        finalResponse.recommendations.items.forEach(item => {
+            markdownOutput += `* **${item.name}:** ${item.description}\n`;
+        });
+
+        // --- FIX 4: Create a fake Gemini response object that the frontend expects ---
+        const fakeGeminiPayload = {
+            candidates: [{
+                content: {
+                    parts: [{ text: markdownOutput }]
+                }
+            }]
+        };
+
+        // --- FIX 5: Wrap the fake payload in the 'result' object the frontend needs ---
+        const responseForFrontend = {
+            result: JSON.stringify(fakeGeminiPayload)
+        };
 
         return {
             statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(finalResponse),
+            headers: { "Access-Control-Allow-Origin": "*" }, // For CORS
+            body: JSON.stringify(responseForFrontend),
         };
 
     } catch (e) {
         console.error("Backend Error:", e.response ? e.response.data : e.message);
-        return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + (e.response ? (e.response.data.error ? e.response.data.error.message : JSON.stringify(e.response.data)) : e.message) }) };
+        const errorMessage = e.response ? (e.response.data.error ? e.response.data.error.message : JSON.stringify(e.response.data)) : e.message;
+        // Also wrap the error response in the structure the frontend expects
+        const errorPayload = {
+            error: { message: "An internal server error occurred: " + errorMessage }
+        };
+        const responseForFrontend = {
+            result: JSON.stringify(errorPayload)
+        };
+        return { 
+            statusCode: 500,
+            headers: { "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify(responseForFrontend)
+        };
     }
 };
