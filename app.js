@@ -16,30 +16,25 @@ document.getElementById('analyze-btn').onclick = async function () {
     });
     const data = await response.json();
 
-    if (data.result) {
-      try {
-        const raw = JSON.parse(data.result);
-        if (
-          raw.candidates &&
-          Array.isArray(raw.candidates) &&
-          raw.candidates[0] &&
-          raw.candidates.content &&
-          raw.candidates.content.parts &&
-          Array.isArray(raw.candidates.content.parts) &&
-          raw.candidates.content.parts &&
-          typeof raw.candidates.content.parts.text === "string"
-        ) {
-          document.getElementById('ai-result').innerText = raw.candidates.content.parts.text;
-        } else {
-          document.getElementById('ai-result').innerText = data.result; // fallback: show raw JSON
-        }
-      } catch (e) {
-        document.getElementById('ai-result').innerText = data.result; // fallback on parse error
-      }
+   if (data.result) {
+  try {
+    const raw = JSON.parse(data.result);
+    if (
+      raw.candidates &&
+      Array.isArray(raw.candidates) &&
+      raw.candidates[0] &&
+      raw.candidates.content &&
+      Array.isArray(raw.candidates[0].content.parts) &&
+      raw.candidates.content.parts &&
+      typeof raw.candidates.content.parts.text === "string"
+    ) {
+      document.getElementById('ai-result').innerText = raw.candidates[0].content.parts.text;
     } else {
-      document.getElementById('ai-result').innerText = "Unknown error from AI backend.";
+      document.getElementById('ai-result').innerText = data.result;
     }
   } catch (e) {
-    document.getElementById('ai-result').innerText = "Fetch error: " + e.message;
+    document.getElementById('ai-result').innerText = data.result;
   }
-};
+} else {
+  document.getElementById('ai-result').innerText = "Unknown error from AI backend.";
+}
