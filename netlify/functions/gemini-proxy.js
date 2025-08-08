@@ -35,33 +35,16 @@ exports.handler = async function(event) {
             };
         }
 
-        // 3. Construct the Advanced AI Prompt
-        const userInput = `Title: ${title}\nDescription: ${description || "No description provided"}`;
+        // 3. Construct a SIMPLIFIED AI Prompt for debugging
+        const simplifiedPrompt = `
+            As an eco-analyst, analyze the following product.
+            - Product: "${title}"
+            - Description: "${description || 'Not provided'}"
 
-        const systemPrompt = `
-            You are "Eco Jinner," an expert sustainability analyst. Your goal is to provide a comprehensive, actionable analysis of a product based on user input.
-
-            Follow these steps precisely:
-
-            1.  **Initial Analysis:** Briefly analyze the product's sustainability based on its title and description. Mention its materials, potential manufacturing impact, and end-of-life considerations.
-
-            2.  **Eco-Friendliness Verdict:** State clearly whether the product is generally "Eco-Friendly" or "Not Eco-Friendly".
-
-            3.  **Actionable Recommendations (This is the most important part):**
-                * **If the product is NOT Eco-Friendly:**
-                    * Provide a section titled "### 🌍 Eco-Friendly Alternatives".
-                    * Suggest 2-3 specific types of alternative products. For each alternative, find and include a real, direct shopping link from a major e-commerce site (like Amazon, Etsy, EarthHero, etc.).
-                * **If the product IS Eco-Friendly:**
-                    * Provide a section titled "### 🛒 Where to Find Similar Products".
-                    * Find and include 2-3 real, direct shopping links to similar, highly-rated eco-friendly products on major e-commerce sites.
-                * **If you cannot find any shopping links OR the item is simple:**
-                    * Provide a section titled "### 🔨 DIY At-Home Alternative".
-                    * Briefly outline the steps to make a similar item at home and list the necessary materials.
-
-            4.  **Formatting:** Use Markdown for clear formatting (headings, bold text, and bullet points). Ensure all links are functional.
+            1.  Is it eco-friendly? (Yes/No)
+            2.  Briefly explain why.
+            3.  Suggest ONE eco-friendly alternative product type.
         `;
-
-        const fullPrompt = `${systemPrompt}\n\n--- USER INPUT ---\n${userInput}`;
 
         // 4. Securely Call the Gemini API
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
@@ -75,7 +58,7 @@ exports.handler = async function(event) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{
-                        parts: [{ text: fullPrompt }]
+                        parts: [{ text: simplifiedPrompt }]
                     }]
                 })
             }
