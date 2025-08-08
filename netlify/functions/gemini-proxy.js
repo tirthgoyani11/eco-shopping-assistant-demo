@@ -58,7 +58,7 @@ exports.handler = async function(event) {
         ? `Analyze the following product for eco-friendliness. Is it eco-friendly? If yes, state one main eco feature; if no, briefly explain why not:\nTitle: ${title}\nDescription: ${description}`
         : "Explain how AI works in a few words";
 
-    const GEMINI_KEY = "YOUR_GEMINI_API_KEY"; // <-- YOUR KEY HERE
+    const GEMINI_KEY = "AIzaSyDEsa0-qw_olb30gI6Gypf60lBohGYw_XY"; // <-- YOUR KEY HERE
 
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_KEY,
