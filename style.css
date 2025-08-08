@@ -429,16 +429,12 @@ footer {
     max-width: 99vw;
     margin: 0.5em auto;
   }
-  #ai-result,
-  .eco-ai-result {
-    font-size: 0.97em;
-    max-width: 95vw;
-  }
-}
-
-#ai-result {
+ #ai-result {
   margin-top: 1em;
-  font-size: 1.07em;
+  font-size: 1.1em;
   line-height: 1.6;
 }
-#ai-result ul, #ai-result ol { margin-left: 1.3em; }
+#ai-result ul, #ai-result ol { margin-left: 1.5em; }
+#ai-result strong, #ai-result b { color: #15803d; }
+#ai-result em, #ai-result i { color: #64748b; }
+#ai-result span[style*="red"] { font-weight: bold; }
