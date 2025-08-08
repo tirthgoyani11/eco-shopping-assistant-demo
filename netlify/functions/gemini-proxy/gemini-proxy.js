@@ -20,7 +20,7 @@ exports.handler = async function(event) {
             throw new Error("API key is not configured on the server.");
         }
 
-        // --- NEW EXPERT-LEVEL PROMPTS ---
+        // --- EXPERT-LEVEL PROMPTS WITH ADVANCED COSMETICS LOGIC ---
         let systemInstructions = '';
         if (category === 'eco') {
             systemInstructions = `
@@ -36,18 +36,20 @@ exports.handler = async function(event) {
                 - Recommendations must be from Indian grocery sites (BigBasket, Blinkit, etc.).
             `;
         } else if (category === 'cosmetic') {
+            // --- NEW, IMPROVED COSMETICS INSTRUCTIONS ---
             systemInstructions = `
                 You are an expert Clean Cosmetics analyst for the Indian market.
                 - Your analysis MUST screen for and mention common harmful chemicals like parabens, sulfates (SLS/SLES), and phthalates.
                 - You MUST also identify and praise beneficial properties like 'vegan', 'cruelty-free', 'dermatologically tested', or 'certified organic'.
-                - Recommendations must be from Indian beauty sites (Nykaa, Myntra, etc.).
+                - For recommendations, you MUST search a broad range of Indian beauty sites, including Nykaa, Myntra, Purplle, Tira Beauty, and Amazon.in.
+                - Your primary goal is to find a direct product link. If a reliable direct link is not available on any of those sites, you MUST provide a Google search link as a fallback.
             `;
         }
 
         const prompt = `
             ${systemInstructions}
 
-            **Task:** Perform an expert analysis of the user's product based on your specialized role. Find a representative image for the user's product and for each of your recommendations. For each recommendation, generate a reliable link (prioritize direct product links, but use a Google search link as a fallback). Return a single, clean JSON object.
+            **Task:** Perform an expert analysis of the user's product based on your specialized role. Find a representative image for the user's product and for each of your recommendations. For each recommendation, generate a reliable link based on your instructions. Return a single, clean JSON object.
 
             **JSON Output Structure (MUST follow this exactly):**
             \`\`\`json
