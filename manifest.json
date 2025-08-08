@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Eco-Friendly Shopping Assistant",
+  "version": "1.0",
+  "description": "Browser extension that helps users make eco-friendly shopping decisions with sustainability badges and popups",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "css": []
+    }
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Eco-Friendly Shopping Assistant",
+    "default_icon": {
+      "16": "public/icon.png",
+      "32": "public/icon.png",
+      "48": "public/icon.png",
+      "128": "public/icon.png"
+    }
+  },
+  "icons": {
+    "16": "public/icon.png",
+    "32": "public/icon.png",
+    "48": "public/icon.png",
+    "128": "public/icon.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["data/eco_brands.json"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
