@@ -436,3 +436,9 @@ footer {
   }
 }
 
+#ai-result {
+  margin-top: 1em;
+  font-size: 1.07em;
+  line-height: 1.6;
+}
+#ai-result ul, #ai-result ol { margin-left: 1.3em; }
