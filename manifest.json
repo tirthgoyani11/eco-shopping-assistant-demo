@@ -1,10 +1,10 @@
 {
-  "name": "Eco Jinner - AI Product Analyst",
+  "name": "Eco Jinner - The Definitive Analyst",
   "short_name": "Eco Jinner",
   "description": "Your AI-Powered analyst for sustainability, healthy food, and cosmetics. Get instant analysis and recommendations for better products.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1f2937",
+  "background_color": "#020617",
   "theme_color": "#0f2027",
   "orientation": "portrait-primary",
   "icons": [
