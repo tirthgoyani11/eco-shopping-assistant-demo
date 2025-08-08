@@ -7,7 +7,10 @@ document.getElementById('analyze-btn').onclick = async function () {
     document.getElementById('ai-result').innerHTML = "<span style='color:#c00;'>Please enter a product title or description.</span>";
     return;
   }
-  document.getElementById('ai-result').innerHTML = "<em>Analyzing via Gemini...</em>";
+
+  // Show loading spinner at analysis start
+  document.getElementById('eco-loading-spinner').style.display = "block";
+  document.getElementById('ai-result').innerHTML = "";
 
   try {
     const response = await fetch('https://ecojinner.netlify.app/.netlify/functions/gemini-proxy', {
@@ -51,10 +54,12 @@ document.getElementById('analyze-btn').onclick = async function () {
       answer = "Sorry, backend returned invalid data. Please try again!";
     }
 
-    // Always render markdown so output is formatted
+    // Hide the loading spinner, show the result
+    document.getElementById('eco-loading-spinner').style.display = "none";
     document.getElementById('ai-result').innerHTML = marked.parse(answer);
 
   } catch (e) {
+    document.getElementById('eco-loading-spinner').style.display = "none";
     document.getElementById('ai-result').innerHTML =
       `<span style="color: red;">Fetch error: ${e.message}</span><br>` +
       `<span style="color: #666;">Please check your internet connection or re-try soon.</span>`;
