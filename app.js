@@ -1,6 +1,6 @@
 /**
  * =================================================================
- * Eco Jinner - Definitive Application Logic (app.js)
+ * Eco Jinner - Definitive Application Logic (v9 - Complete)
  * =================================================================
  */
 
@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 2. DOM Element References ---
     const elements = {
+        navLinks: document.querySelectorAll('.nav-link, .mobile-nav-link'),
+        pageContents: document.querySelectorAll('.page-content'),
         analyzeBtn: document.getElementById('analyze-btn'),
         prodTitleInput: document.getElementById('prod-title'),
         categorySelector: document.getElementById('category-selector'),
@@ -44,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
         closeHistoryBtn: document.getElementById('close-history-btn'),
         clearHistoryBtn: document.getElementById('clear-history-btn'),
         historyList: document.getElementById('history-list'),
+        mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+        closeMobileMenuBtn: document.getElementById('close-mobile-menu-btn'),
+        mobileMenu: document.getElementById('mobile-menu'),
         notificationModal: document.getElementById('notification-modal'),
         notificationMessage: document.getElementById('notification-message'),
         confirmModal: document.getElementById('confirm-modal'),
@@ -58,8 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
         history: JSON.parse(localStorage.getItem('ecoJinnerHistory')) || [],
     };
 
-    // --- 4. Core & UI Functions ---
+    // --- 4. Navigation Logic ---
+    const showPage = (pageId) => {
+        elements.pageContents.forEach(page => page.classList.add('hidden'));
+        const targetPage = document.getElementById(pageId);
+        if (targetPage) targetPage.classList.remove('hidden');
 
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.toggle('active-link', link.getAttribute('href') === `#${pageId}`);
+        });
+        togglePanel(elements.mobileMenu, false);
+    };
+
+    // --- 5. Core & UI Functions ---
     const updateCategory = (category, buttonEl) => {
         selectedCategory = category;
         const icon = buttonEl.textContent.split(' ')[0];
@@ -73,36 +89,20 @@ document.addEventListener('DOMContentLoaded', () => {
         buttonEl.setAttribute('aria-checked', 'true');
         elements.prodTitleInput.focus();
     };
-
-    const showNotification = (message, type = 'success') => {
-        elements.notificationMessage.textContent = message;
-        elements.notificationModal.className = `fixed bottom-5 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
-        requestAnimationFrame(() => {
-            elements.notificationModal.classList.remove('opacity-0', 'translate-y-10');
-        });
-        setTimeout(() => {
-            elements.notificationModal.classList.add('opacity-0', 'translate-y-10');
-        }, 3000);
-    };
-    
-    const toggleModal = (modal, show) => {
-        const overlay = document.getElementById(modal.id + '-overlay');
-        if (show) {
-            modal.classList.remove('hidden');
-            if (overlay) overlay.classList.remove('hidden');
-        } else {
-            modal.classList.add('hidden');
-            if (overlay) overlay.classList.add('hidden');
-        }
-    };
     
     const togglePanel = (panel, show) => {
         if (show) panel.classList.remove('translate-x-full');
         else panel.classList.add('translate-x-full');
     };
 
-    // --- 5. Main Analysis Logic ---
+    const showNotification = (message, type = 'success') => {
+        elements.notificationMessage.textContent = message;
+        elements.notificationModal.className = `fixed bottom-5 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+        requestAnimationFrame(() => elements.notificationModal.classList.remove('opacity-0', 'translate-y-10'));
+        setTimeout(() => elements.notificationModal.classList.add('opacity-0', 'translate-y-10'), 3000);
+    };
 
+    // --- 6. Main Analysis Logic ---
     const handleAnalysis = async () => {
         const title = elements.prodTitleInput.value.trim();
         if (!title) {
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.loadingAnimation.classList.remove('hidden');
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 2500)); // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 2500));
             const response = await fetch('/.netlify/functions/gemini-proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -169,8 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed')), 10);
     };
 
-    // --- 6. History Panel Logic ---
-
+    // --- 7. History Panel Logic ---
     const saveToHistory = (title, category, resultData) => {
         const historyEntry = { id: Date.now(), title, category, resultData };
         state.history.unshift(historyEntry);
@@ -198,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = Number(itemEl.dataset.historyId);
             const historyItem = state.history.find(item => item.id === id);
             if (historyItem) {
+                showPage('home');
                 elements.placeholderContent.classList.add('hidden');
                 elements.loadingAnimation.classList.add('hidden');
                 renderResults(historyItem.resultData);
@@ -215,14 +215,20 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleModal(elements.confirmModal, false);
         };
         const onCancel = () => toggleModal(elements.confirmModal, false);
-
         toggleModal(elements.confirmModal, true);
         elements.confirmModalConfirm.onclick = onConfirm;
         elements.confirmModalCancel.onclick = onCancel;
         elements.confirmModalOverlay.onclick = onCancel;
     };
 
-    // --- 7. Event Listeners ---
+    // --- 8. Event Listeners ---
+    elements.navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage(link.getAttribute('href').substring(1));
+        });
+    });
+    
     elements.analyzeBtn.addEventListener('click', handleAnalysis);
     elements.prodTitleInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleAnalysis(); });
     elements.categorySelector.addEventListener('click', e => {
@@ -230,16 +236,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btn) updateCategory(btn.dataset.category, btn);
     });
     
-    // History Panel Listeners
     elements.historyBtn.addEventListener('click', () => togglePanel(elements.historyPanel, true));
     elements.closeHistoryBtn.addEventListener('click', () => togglePanel(elements.historyPanel, false));
     elements.historyList.addEventListener('click', handleHistoryClick);
     elements.clearHistoryBtn.addEventListener('click', clearHistory);
+    
+    elements.mobileMenuBtn.addEventListener('click', () => togglePanel(elements.mobileMenu, true));
+    elements.closeMobileMenuBtn.addEventListener('click', () => togglePanel(elements.mobileMenu, false));
 
-    // --- 8. Initial Application Setup ---
+    // --- 9. Initial Application Setup ---
     const initializeApp = () => {
         updateCategory('eco', document.querySelector('.category-btn[data-category="eco"]'));
         renderHistory();
+        showPage('home');
     };
 
     initializeApp();
