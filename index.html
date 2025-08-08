@@ -6,23 +6,28 @@
     <title>Eco Jinner - The Definitive Analyst</title>
     <meta name="description" content="Your AI-Powered analyst for sustainability, healthy food, and cosmetics. Get instant analysis and recommendations for better products.">
     
+    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Link to your custom stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="antialiased">
+    <!-- Canvas for the 3D background -->
     <canvas id="bg-canvas"></canvas>
-    
+
     <div class="relative min-h-screen flex flex-col">
+        <!-- Header with Logo and Navigation -->
         <header class="w-full p-4 flex justify-between items-center flex-shrink-0 glass-ui sticky top-0 z-40">
             <a href="#home" class="flex items-center gap-3 nav-link" aria-label="Eco Jinner Home">
-                <svg class="w-10 h-10 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                </svg>
+                <svg class="w-10 h-10 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>
                 <span class="text-xl font-bold text-white">Eco Jinner</span>
             </a>
             <nav class="hidden md:flex items-center gap-6">
@@ -32,51 +37,123 @@
             </nav>
             <div class="flex items-center gap-2">
                 <button id="history-btn" aria-label="View Analysis History" aria-controls="history-panel" class="control-btn">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
                 <button id="mobile-menu-btn" class="md:hidden control-btn" aria-label="Open menu" aria-controls="mobile-menu">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                    </svg>
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                 </button>
             </div>
         </header>
-        
+
+        <!-- Main Content Area -->
         <main id="main-content" class="flex-grow">
-
+            <!-- Home Page Content -->
             <div id="home" class="page-content">
-                <!-- ... (home page content remains the same) ... -->
-            </div>
-
-            <div id="discover" class="page-content hidden">
-                <div class="container mx-auto p-4 md:p-6">
-                    <h1 class="text-4xl font-bold text-white text-center my-8">Discover Sustainable Products</h1>
-                    
-                    <section id="product-spotlight" class="mb-12 glass-ui p-6 rounded-2xl text-center hidden"></section>
-
-                    <div id="discover-filters" class="flex flex-wrap justify-center gap-3 mb-10">
-                    </div>
-
-                    <section id="editors-picks-section" class="mb-12 hidden">
-                        <h2 class="text-2xl font-bold text-white mb-6">Editor's Picks</h2>
-                        <div id="editors-picks-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div class="container mx-auto p-4 md:p-6 flex flex-col items-center">
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-white text-center mt-8">The Intelligent Product Analyst</h1>
+                    <div class="w-full max-w-2xl mx-auto my-8">
+                        <div id="command-bar" role="search" class="command-bar glass-ui p-2 rounded-full flex items-center gap-2">
+                            <div id="category-display" class="flex-shrink-0 flex items-center gap-2 pl-3 text-white/80"></div>
+                            <input type="text" id="prod-title" class="command-input text-lg" placeholder="Enter product name or details..." aria-label="Product name or details">
+                            <button id="analyze-btn" aria-label="Analyze Product" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-transform active:scale-95 disabled:bg-emerald-400/50">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </button>
                         </div>
-                    </section>
-
-                    <h2 class="text-2xl font-bold text-white mb-6">All Products</h2>
-                    <div id="discover-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div id="category-selector" role="radiogroup" aria-label="Select analysis category" class="flex justify-center gap-3 mt-4">
+                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" role="radio" data-category="eco">🌿 Eco-Friendly</button>
+                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" role="radio" data-category="food">🍎 Healthy Food</button>
+                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" role="radio" data-category="cosmetic">💄 Cosmetics</button>
+                        </div>
                     </div>
+                    <section id="result-container" aria-live="polite" class="w-full max-w-5xl">
+                        <div id="placeholder-content" class="flex h-full justify-center items-center py-20">
+                            <p class="text-white/60 text-lg text-center">Your detailed analysis will appear here.</p>
+                        </div>
+                        <div id="loading-animation" class="hidden loader-container py-20">
+                            <div class="glitch-text" data-text="Analyzing vibes..."></div>
+                            <p class="text-white/50">The genie is thinking...</p>
+                        </div>
+                        <div id="result-content" class="hidden"></div>
+                    </section>
                 </div>
             </div>
 
-            <div id="learn" class="page-content hidden">
-                <!-- ... (learn page content remains the same) ... -->
+            <!-- Discover Page Content -->
+            <div id="discover" class="page-content hidden">
+                <div class="container mx-auto p-4 md:p-6">
+                    <h1 class="text-4xl font-bold text-white text-center my-8">Discover Sustainable Products</h1>
+                    <section id="product-spotlight" class="mb-12 glass-ui p-6 rounded-2xl text-center hidden"></section>
+                    <div id="discover-filters" class="flex flex-wrap justify-center gap-3 mb-10"></div>
+                    <section id="editors-picks-section" class="mb-12 hidden">
+                        <h2 class="text-2xl font-bold text-white mb-6">Editor's Picks</h2>
+                        <div id="editors-picks-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                    </section>
+                    <h2 class="text-2xl font-bold text-white mb-6">All Products</h2>
+                    <div id="discover-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
             </div>
 
+            <!-- Learn Page Content -->
+            <div id="learn" class="page-content hidden">
+                <div class="container mx-auto p-4 md:p-6">
+                    <h1 class="text-4xl font-bold text-white text-center my-8">Learn Hub</h1>
+                    <p class="text-center text-white/70">Coming soon! Read articles and guides on sustainable living.</p>
+                </div>
+            </div>
         </main>
-
+        
+        <!-- Footer -->
+        <footer class="w-full text-center p-4 mt-auto flex-shrink-0">
+            <p class="text-sm text-white/40">&copy; 2025 Eco Jinner. All rights reserved.</p>
+        </footer>
     </div>
+    
+    <!-- History Panel -->
+    <aside id="history-panel" class="fixed top-0 right-0 h-full w-full max-w-md glass-ui p-6 transform translate-x-full z-50 overflow-y-auto flex flex-col">
+        <div class="flex justify-between items-center mb-6 flex-shrink-0">
+            <h2 class="text-2xl font-bold text-white">Analysis History</h2>
+            <button id="close-history-btn" class="p-2 rounded-full hover:bg-white/10 transition" aria-label="Close history panel">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div id="history-list" class="flex-grow overflow-y-auto -mr-4 pr-4"></div>
+        <div class="mt-4 flex-shrink-0">
+            <button id="clear-history-btn" class="w-full text-center bg-red-600/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600/70 transition disabled:opacity-50">Clear History</button>
+        </div>
+    </aside>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobile-menu" class="fixed top-0 right-0 h-full w-full max-w-xs glass-ui p-6 transform translate-x-full z-50 flex flex-col">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-bold text-white">Menu</h2>
+            <button id="close-mobile-menu-btn" class="p-2 rounded-full hover:bg-white/10 transition" aria-label="Close menu">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <nav class="flex flex-col gap-4">
+            <a href="#home" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Home</a>
+            <a href="#discover" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Discover</a>
+            <a href="#learn" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Learn</a>
+        </nav>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal-overlay" class="fixed inset-0 bg-black/60 z-50 hidden modal-overlay"></div>
+    <div id="confirm-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm glass-ui p-6 rounded-2xl z-50 hidden">
+        <h3 id="confirm-modal-title" class="text-lg font-bold text-white mb-4">Are you sure?</h3>
+        <p id="confirm-modal-text" class="text-white/80 mb-6">This action will permanently delete your analysis history.</p>
+        <div class="flex justify-end gap-4">
+            <button id="confirm-modal-cancel" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Cancel</button>
+            <button id="confirm-modal-confirm" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">Confirm</button>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notification-modal" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none">
+        <p id="notification-message"></p>
+    </div>
+
+    <!-- Link to your application logic -->
+    <script src="app.js"></script>
 </body>
 </html>
