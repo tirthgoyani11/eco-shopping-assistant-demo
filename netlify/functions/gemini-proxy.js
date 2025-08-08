@@ -1,14 +1,8 @@
-// --- DEEP DEBUGGING VERSION ---
-
-// Note: No 'require("node-fetch")' needed in modern Netlify runtimes.
-// This removes a potential point of failure.
+const fetch = require("node-fetch");
 
 exports.handler = async function(event) {
-    console.log("--- Function execution started ---");
-
     // 1. Standard Pre-flight and Method Checks
     if (event.httpMethod === "OPTIONS") {
-        console.log("Handling OPTIONS pre-flight request.");
         return {
             statusCode: 204,
             headers: {
@@ -19,83 +13,101 @@ exports.handler = async function(event) {
             body: "",
         };
     }
-    console.log(`Received a ${event.httpMethod} request.`);
 
     if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
+        return {
+            statusCode: 405,
+            body: "Method Not Allowed",
+            headers: { "Access-Control-Allow-Origin": "*" },
+        };
     }
 
     try {
-        // 2. Parse Input and Log
-        console.log("Step 2: Parsing request body...");
-        let body;
-        try {
-            body = JSON.parse(event.body || "{}");
-        } catch (e) {
-            console.error("CRITICAL: Failed to parse event.body.", e);
-            throw new Error("Invalid JSON in request body.");
-        }
-        
+        // 2. Parse Input from Frontend
+        const body = JSON.parse(event.body || "{}");
         const { title, description } = body;
-        console.log("Successfully parsed body. Input:", { title, description });
 
         if (!title && !description) {
-            throw new Error("Validation failed: Title and description are missing.");
+            return {
+                statusCode: 400,
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({ error: "Please provide a product title or description." }),
+            };
         }
 
-        // 3. Construct the Prompt
-        const prompt = `Analyze: "${title}" - "${description || 'N/A'}"`;
-        console.log("Step 3: Constructed a simple prompt.");
+        // 3. Construct the Advanced AI Prompt
+        const userInput = `Title: ${title}\nDescription: ${description || "No description provided"}`;
 
-        // 4. Check for API Key
-        console.log("Step 4: Checking for API Key...");
+        const systemPrompt = `
+            You are "Eco Jinner," an expert sustainability analyst. Your goal is to provide a comprehensive, actionable analysis of a product based on user input.
+
+            Follow these steps precisely:
+
+            1.  **Initial Analysis:** Briefly analyze the product's sustainability based on its title and description. Mention its materials, potential manufacturing impact, and end-of-life considerations.
+
+            2.  **Eco-Friendliness Verdict:** State clearly whether the product is generally "Eco-Friendly" or "Not Eco-Friendly".
+
+            3.  **Actionable Recommendations (This is the most important part):**
+                * **If the product is NOT Eco-Friendly:**
+                    * Provide a section titled "### 🌍 Eco-Friendly Alternatives".
+                    * Suggest 2-3 specific types of alternative products. For each alternative, find and include a real, direct shopping link from a major e-commerce site (like Amazon, Etsy, EarthHero, etc.).
+                * **If the product IS Eco-Friendly:**
+                    * Provide a section titled "### 🛒 Where to Find Similar Products".
+                    * Find and include 2-3 real, direct shopping links to similar, highly-rated eco-friendly products on major e-commerce sites.
+                * **If you cannot find any shopping links OR the item is simple:**
+                    * Provide a section titled "### 🔨 DIY At-Home Alternative".
+                    * Briefly outline the steps to make a similar item at home and list the necessary materials.
+
+            4.  **Formatting:** Use Markdown for clear formatting (headings, bold text, and bullet points). Ensure all links are functional.
+        `;
+
+        const fullPrompt = `${systemPrompt}\n\n--- USER INPUT ---\n${userInput}`;
+
+        // 4. Securely Call the Gemini API
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) {
-            console.error("CRITICAL: GEMINI_API_KEY environment variable not found!");
             throw new Error("API key is not configured on the server.");
         }
-        console.log("API Key found successfully.");
 
-        // 5. Call the Gemini API
-        const modelToUse = "gemini-2.0-flash";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
-        
-        console.log(`Step 5: Sending POST request to Google API for model: ${modelToUse}`);
-        
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-
-        console.log(`Received response from Google with status: ${response.status}`);
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: fullPrompt }]
+                    }]
+                })
+            }
+        );
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error("Google API Error Response:", JSON.stringify(errorData, null, 2));
-            throw new Error(`Google API responded with an error: ${response.status}`);
+            console.error("Gemini API Error:", errorData);
+            throw new Error(`Gemini API responded with status: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("Successfully received and parsed data from Google.");
 
-        // 6. Return the successful response
-        console.log("Step 6: Sending successful response to frontend.");
+        // 5. Return the Response to the Frontend
         return {
             statusCode: 200,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ result: JSON.stringify(data) })
+            body: JSON.stringify({ result: JSON.stringify(data, null, 2) })
         };
 
     } catch (e) {
-        console.error("--- FATAL ERROR IN TRY-CATCH BLOCK ---");
-        console.error(e);
+        console.error("Backend Error:", e);
         return {
             statusCode: 500,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ error: "An internal server error occurred: " + e.message })
+            body: JSON.stringify({
+                result: JSON.stringify({
+                    error: {
+                        message: "An internal server error occurred: " + e.message
+                    }
+                })
+            })
         };
     }
 };
