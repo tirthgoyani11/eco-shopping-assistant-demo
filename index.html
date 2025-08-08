@@ -12,7 +12,41 @@
     <p>Find and choose eco-friendly products effortlessly.</p>
   </header>
   
+  <!-- New AI-Powered Eco Checker Section -->
+  <section id="eco-checker" class="eco-checker-section" aria-label="AI Eco Checker">
+    <div class="eco-checker-container">
+      <h2>🤖 AI Eco Checker</h2>
+      <p>Get instant sustainability insights for any product or ingredient</p>
+      
+      <div class="checker-input-group">
+        <label for="eco-input" class="visually-hidden">Enter product name or ingredient</label>
+        <input 
+          type="text" 
+          id="eco-input" 
+          class="eco-input" 
+          placeholder="Enter product name or ingredient..."
+          aria-describedby="eco-input-help"
+        >
+        <button 
+          type="button" 
+          id="check-eco-btn" 
+          class="check-eco-btn"
+          aria-label="Check eco-friendliness"
+        >
+          <span aria-hidden="true">🔍</span>
+          <span class="btn-text">Check</span>
+        </button>
+      </div>
+      
+      <div id="eco-input-help" class="input-help">Try searching for "cotton", "plastic bottle", or any product name</div>
+      
+      <div id="eco-results" class="eco-results" aria-live="polite"></div>
+    </div>
+  </section>
+  
   <main id="product-list">
+    <h2 class="section-title">Featured Eco Products</h2>
+    
     <!-- Product cards will be dynamically generated here -->
     <div class="product-card" data-product-id="1">
       <img src="./assets/product1.jpg" alt="Eco Product 1" class="product-image">
@@ -20,7 +54,14 @@
         <h3 class="product-name">Bamboo Toothbrush Set</h3>
         <p class="product-description">Biodegradable bamboo toothbrushes with soft bristles. Eco-friendly alternative to plastic toothbrushes.</p>
         <div class="product-price">$12.99</div>
-        <button class="suggestion-btn" data-product="Bamboo Toothbrush Set">Get Eco Suggestions</button>
+        <button 
+          class="suggestion-btn" 
+          data-product="Bamboo Toothbrush Set"
+          aria-label="Get eco suggestions for Bamboo Toothbrush Set"
+        >
+          <span aria-hidden="true">🌿</span>
+          <span>Get Eco Suggestions</span>
+        </button>
       </div>
     </div>
     
@@ -30,7 +71,14 @@
         <h3 class="product-name">Reusable Water Bottle</h3>
         <p class="product-description">Stainless steel insulated water bottle. Keeps drinks cold for 24hrs, hot for 12hrs. BPA-free.</p>
         <div class="product-price">$24.99</div>
-        <button class="suggestion-btn" data-product="Reusable Water Bottle">Get Eco Suggestions</button>
+        <button 
+          class="suggestion-btn" 
+          data-product="Reusable Water Bottle"
+          aria-label="Get eco suggestions for Reusable Water Bottle"
+        >
+          <span aria-hidden="true">🌿</span>
+          <span>Get Eco Suggestions</span>
+        </button>
       </div>
     </div>
     
@@ -40,23 +88,48 @@
         <h3 class="product-name">Organic Cotton Tote Bag</h3>
         <p class="product-description">100% organic cotton tote bag. Durable, washable, and perfect for grocery shopping. Reduces plastic waste.</p>
         <div class="product-price">$15.99</div>
-        <button class="suggestion-btn" data-product="Organic Cotton Tote Bag">Get Eco Suggestions</button>
+        <button 
+          class="suggestion-btn" 
+          data-product="Organic Cotton Tote Bag"
+          aria-label="Get eco suggestions for Organic Cotton Tote Bag"
+        >
+          <span aria-hidden="true">🌿</span>
+          <span>Get Eco Suggestions</span>
+        </button>
       </div>
     </div>
   </main>
   
-  <!-- Popup for eco suggestions -->
-  <div id="popup" class="popup-overlay">
+  <!-- Enhanced Popup for eco suggestions -->
+  <div class="popup-overlay" id="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
     <div class="popup-content">
-      <span class="popup-close">&times;</span>
-      <h3 id="popup-title">Eco Suggestions</h3>
-      <div id="popup-body">
+      <div class="popup-header">
+        <h3 id="popup-title">Eco Suggestions</h3>
+        <button 
+          class="popup-close" 
+          aria-label="Close suggestions popup"
+          type="button"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div id="popup-body" class="popup-body">
         <!-- Dynamic content will be loaded here -->
+      </div>
+      <div class="popup-actions">
+        <button type="button" class="btn-secondary" id="save-suggestion">Save for Later</button>
+        <button type="button" class="btn-primary" id="learn-more">Learn More</button>
       </div>
     </div>
   </div>
   
-  <footer style="text-align:center;margin:2em 0; color:#86ba90;">
+  <!-- Loading indicator -->
+  <div id="loading-indicator" class="loading-indicator" aria-hidden="true">
+    <div class="spinner"></div>
+    <span>Analyzing eco-friendliness...</span>
+  </div>
+  
+  <footer>
     © 2025 Eco Assistant — Hackathon Demo
   </footer>
   
