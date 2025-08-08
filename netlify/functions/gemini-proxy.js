@@ -34,17 +34,19 @@ exports.handler = async function(event) {
     if (!title && !description) {
       return withCORS({ statusCode: 400, body: "Missing title or description" });
     }
-
     const GEMINI_KEY = "AIzaSyCdBFIzpAfPfk7tW9IUOSihKU20XmuyrGA";
     const prompt =
       `Analyze the following product for eco-friendliness. Is it eco-friendly? If yes, state one main eco feature; if no, briefly explain why not:\nTitle: ${title}\nDescription: ${description}`;
 
+    // *** The correct, supported Gemini model endpoint ***
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
       }
     );
 
@@ -52,25 +54,33 @@ exports.handler = async function(event) {
     let result = "No response.";
 
     if (
-  data.candidates &&
-  data.candidates &&
-  data.candidates.content &&
-  data.candidates.content.parts &&
-  data.candidates.content.parts &&
-  data.candidates.content.parts.text
-) {
-  result = data.candidates.content.parts.text;
-  return withCORS({
-    statusCode: 200,
-    body: JSON.stringify({ result })
-  });
-
+      data.candidates &&
+      data.candidates[0] &&
+      data.candidates.content &&
+      data.candidates.content.parts &&
+      data.candidates.content.parts &&
+      data.candidates.content.parts.text
+    ) {
+      result = data.candidates.content.parts.text;
+      return withCORS({
+        statusCode: 200,
+        body: JSON.stringify({ result })
+      });
     } else if (data.error) {
-      return withCORS({ statusCode: 200, body: JSON.stringify({ error: data.error.message }) });
+      return withCORS({
+        statusCode: 200,
+        body: JSON.stringify({ error: data.error.message })
+      });
     } else {
-      return withCORS({ statusCode: 200, body: JSON.stringify({ error: "Unknown error" }) });
+      return withCORS({
+        statusCode: 200,
+        body: JSON.stringify({ error: "Unknown error" })
+      });
     }
   } catch (e) {
-    return withCORS({ statusCode: 500, body: JSON.stringify({ error: e.message }) });
+    return withCORS({
+      statusCode: 500,
+      body: JSON.stringify({ error: e.message })
+    });
   }
 };
