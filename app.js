@@ -1,84 +1,161 @@
-// --- Enhanced Code ---
+// =================================================================
+// Eco Jinner - The Definitive App Logic (app.js)
+// =================================================================
 
-// It's best practice to get references to DOM elements once and reuse them.
-const analyzeBtn = document.getElementById('analyze-btn');
-const prodTitleInput = document.getElementById('prod-title');
-const prodDescInput = document.getElementById('prod-desc');
-const spinner = document.getElementById('eco-loading-spinner');
-const resultDiv = document.getElementById('ai-result');
+document.addEventListener('DOMContentLoaded', () => {
+    // --- 1. DOM Element References ---
+    // Get all necessary elements from the page once for efficiency.
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const analyzeBtnText = document.getElementById('analyze-btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const prodTitleInput = document.getElementById('prod-title');
+    const categorySelector = document.getElementById('category-selector');
+    const categoryDisplay = document.getElementById('category-display');
+    const placeholderContent = document.getElementById('placeholder-content');
+    const loadingSkeleton = document.getElementById('loading-skeleton');
+    const resultContent = document.getElementById('result-content');
 
-analyzeBtn.onclick = async function () {
-  // Enhancement: Disable the button to prevent multiple submissions while processing.
-  analyzeBtn.disabled = true;
-  analyzeBtn.textContent = 'Analyzing...'; // Optional: Change button text
+    let selectedCategory = null; // To store the currently selected category
 
-  // Show loading spinner and clear previous results.
-  spinner.style.display = 'block';
-  resultDiv.innerHTML = '';
+    // --- 2. UI Interaction Logic ---
 
-  try {
-    const title = prodTitleInput.value.trim();
-    const desc = prodDescInput.value.trim();
-
-    // User guidance for empty input.
-    if (!title && !desc) {
-      resultDiv.innerHTML = "<span style='color:#c00;'>Please enter a product title or description.</span>";
-      // The 'finally' block will still run to re-enable the button.
-      return; 
+    /**
+     * Updates the UI to reflect the currently selected category.
+     * @param {string} category - The category identifier (e.g., 'eco', 'food').
+     * @param {HTMLElement} buttonEl - The button element that was clicked.
+     */
+    function updateCategory(category, buttonEl) {
+        selectedCategory = category;
+        const icon = buttonEl.textContent.split(' ')[0];
+        const text = buttonEl.textContent.split(' ').slice(1).join(' ');
+        
+        // Update the command bar display
+        categoryDisplay.innerHTML = `<span class="text-xl">${icon}</span> <span class="hidden md:inline">${text}</span>`;
+        
+        // Update button styles to show the active one
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('bg-emerald-500/50', 'border-emerald-400');
+        });
+        buttonEl.classList.add('bg-emerald-500/50', 'border-emerald-400');
+        
+        // For better UX, focus the input field after a category is chosen
+        prodTitleInput.focus();
     }
 
-    const response = await fetch('https://ecojinner.netlify.app/.netlify/functions/gemini-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description: desc }),
+    // Event listener for the category selection buttons
+    categorySelector.addEventListener('click', (e) => {
+        const btn = e.target.closest('.category-btn');
+        if (btn) {
+            updateCategory(btn.dataset.category, btn);
+        }
+    });
+    
+    // Set the default category on page load
+    updateCategory('eco', document.querySelector('.category-btn[data-category="eco"]'));
+
+    // --- 3. Core Analysis Function ---
+
+    /**
+     * Handles the entire analysis process, from user input to rendering results.
+     */
+    async function handleAnalysis() {
+        const title = prodTitleInput.value.trim();
+        if (!title) {
+            alert("Please enter a product name.");
+            return;
+        }
+        if (!selectedCategory) {
+            alert("Please select a category.");
+            return;
+        }
+
+        // --- Set UI to Loading State ---
+        analyzeBtn.disabled = true;
+        analyzeBtnText.textContent = 'Analyzing...';
+        btnSpinner.classList.remove('hidden');
+        placeholderContent.classList.add('hidden');
+        resultContent.classList.add('hidden');
+        loadingSkeleton.classList.remove('hidden');
+
+        try {
+            // --- Make the API Call to the Netlify Function ---
+            const response = await fetch('/.netlify/functions/gemini-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category: selectedCategory, title, description: "" }),
+            });
+
+            if (!response.ok) {
+                // Try to parse a JSON error from the backend, otherwise use the status
+                const err = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(err.error || `An unknown server error occurred.`);
+            }
+
+            const data = await response.json();
+            renderResults(data);
+
+        } catch (e) {
+            // --- Handle Errors Gracefully ---
+            placeholderContent.innerHTML = `<p class="text-red-400 text-center"><strong>Request Failed:</strong><br>${e.message}</p>`;
+            placeholderContent.classList.remove('hidden');
+        } finally {
+            // --- Restore UI after completion or error ---
+            analyzeBtn.disabled = false;
+            analyzeBtnText.textContent = 'Analyze';
+            btnSpinner.classList.add('hidden');
+            loadingSkeleton.classList.add('hidden');
+        }
+    }
+
+    // Add event listeners for the analyze button and the Enter key in the input field
+    analyzeBtn.addEventListener('click', handleAnalysis);
+    prodTitleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            handleAnalysis();
+        }
     });
 
-    // Enhancement: Check for HTTP errors (e.g., 404, 500).
-    // The `fetch` API does not throw an error for these, so we must check `response.ok`.
-    if (!response.ok) {
-      // Throw an error to be caught by the main catch block.
-      throw new Error(`Server responded with status: ${response.status} ${response.statusText}`);
+    // --- 4. Results Rendering Function ---
+
+    /**
+     * Renders the data received from the backend into the results panel.
+     * @param {object} data - The JSON data from the gemini-proxy function.
+     */
+    function renderResults(data) {
+        resultContent.innerHTML = `
+            <div class="reveal glass-ui p-6 rounded-2xl">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="md:w-1/3 flex-shrink-0">
+                        <img src="${data.productImage}" alt="${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image+Not+Found';">
+                    </div>
+                    <div class="md:w-2/3">
+                        <h2 class="text-3xl font-bold text-white">${data.productName}</h2>
+                        <p class="text-lg font-semibold ${data.isRecommended ? 'text-emerald-400' : 'text-red-400'} mb-4">${data.verdict}</p>
+                        <div class="prose max-w-none text-white/80">${marked.parse(data.summary)}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal mt-6" style="transition-delay: 200ms;">
+                <h3 class="text-2xl font-bold text-white mb-4 ml-2">${data.recommendations.title}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${data.recommendations.items.map((item, index) => `
+                        <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${300 + index * 100}ms;">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-40 rounded-md mb-3" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image';">
+                            <h4 class="font-bold text-white flex-grow">${item.name}</h4>
+                            <p class="text-sm text-white/60 mb-3 flex-grow">${item.description}</p>
+                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="mt-auto block text-center w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-600 transition">
+                                View Product
+                            </a>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        resultContent.classList.remove('hidden');
+        
+        // Trigger the reveal animations for a beautiful staggered effect
+        setTimeout(() => {
+            document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed'));
+        }, 10);
     }
-
-    const data = await response.json();
-    let answer = '';
-
-    // We expect `data.result` to be a stringified JSON from the backend.
-    // This inner try/catch handles potential parsing errors of that specific string.
-    try {
-      const raw = JSON.parse(data.result);
-      console.log("Gemini raw data.result:", raw); // For debugging.
-
-      // Enhancement: Use Optional Chaining (?.) for safe and clean property access.
-      // BUG FIX: The correct path is `raw.candidates[0]...`, not `raw.candidates...`
-      const textPart = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
-      const geminiError = raw?.error?.message;
-
-      if (geminiError) {
-        answer = `<span style="color:red;"><strong>Gemini Error:</strong> ${geminiError}</span>`;
-      } else if (textPart) {
-        answer = textPart;
-      } else {
-        answer = "Sorry, a valid response was not received from the AI. Please try rephrasing your input.";
-      }
-    } catch (e) {
-      console.error("Error parsing backend data.result:", e);
-      answer = "Sorry, the data from the backend was malformed. Please try again!";
-    }
-
-    // Use the `marked` library to parse Markdown in the answer.
-    resultDiv.innerHTML = marked.parse(answer);
-
-  } catch (e) {
-    // This single catch block now handles network errors, HTTP errors, and other exceptions.
-    console.error("Fetch or processing error:", e);
-    resultDiv.innerHTML =
-      `<span style="color: red;"><strong>Error:</strong> ${e.message}</span><br>` +
-      `<span style="color: #666;">Please check your internet connection or try again soon.</span>`;
-  } finally {
-    // Enhancement: This `finally` block ensures the UI is always restored, even if an error occurs.
-    spinner.style.display = 'none';
-    analyzeBtn.disabled = false;
-    analyzeBtn.textContent = 'Analyze'; // Optional: Restore original button text
-  }
-};
+});
