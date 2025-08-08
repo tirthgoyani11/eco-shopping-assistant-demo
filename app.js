@@ -27,7 +27,7 @@ try {
     raw.candidates &&
     Array.isArray(raw.candidates) &&
     raw.candidates &&
-    raw.candidates.content &&
+    raw.candidates[0].content &&
     Array.isArray(raw.candidates.content.parts) &&
     raw.candidates.content.parts &&
     typeof raw.candidates.content.parts.text === "string"
