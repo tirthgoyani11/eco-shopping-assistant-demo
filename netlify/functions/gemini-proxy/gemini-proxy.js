@@ -1,123 +1,16 @@
 const fetch = require("node-fetch");
 
-// =================================================================
-// UTILS MODULES (Combined into one file to prevent import errors)
-// =================================================================
-
-// --- Affiliate Manager Logic ---
-const YOUR_AMAZON_TAG = "ecojinner-21"; // Example Amazon India tag
-function addAffiliateTag(url) {
-    if (!url) return url;
-    try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname.includes("amazon.in")) {
-            urlObj.searchParams.set("tag", YOUR_AMAZON_TAG);
-            return urlObj.toString();
-        }
-        return url;
-    } catch (error) {
-        return url;
-    }
-}
-
-// --- AI Prompts Logic ---
-function getAnalystPrompt(category, title, description) {
-    return `
-        You are a senior product analyst. Analyze the user's product and create a research plan for your team of scouts.
-        **JSON Output Structure (MUST follow this exactly):**
-        \`\`\`json
-        {
-          "productName": "User's Product Name",
-          "productImage": "A valid, direct URL to a high-quality image of the user's product.",
-          "isRecommended": false,
-          "verdict": "A short, clear verdict.",
-          "summary": "A detailed analysis in Markdown format.",
-          "recommendationsTitle": "Better, Eco-Friendly Alternatives",
-          "scoutKeywords": ["Stainless Steel Water Bottle", "Glass Water Bottle", "Copper Water Bottle"]
-        }
-        \`\`\`
-        --- USER INPUT ---
-        Category: ${category}
-        Title: ${title}
-        Description: ${description || "No description provided"}
-    `;
-}
-
-function getScoutPrompt(keyword, isRetry = false) {
-    // If this is a retry, use a simpler, more direct prompt.
-    const retryInstructions = isRetry ? "Your first attempt failed. Be more general in your search this time." : "";
-    return `
-        You are an expert Indian market product scout. Your only mission is to find ONE single, top-rated product based on the keyword. ${retryInstructions}
-        **Instructions:**
-        1. Find a specific product on a major Indian e-commerce site (Amazon.in, Flipkart, etc.).
-        2. Provide TWO valid, working links: "specificProductLink" and "categorySearchLink".
-        **JSON Output Structure (No extra text, just the JSON object):**
-        \`\`\`json
-        {
-          "name": "The exact product name",
-          "description": "A short, compelling description.",
-          "image": "A direct, high-quality image URL.",
-          "specificProductLink": "https://www.amazon.in/dp/B07922769T",
-          "categorySearchLink": "https://www.amazon.in/s?k=stainless+steel+bottle"
-        }
-        \`\`\`
-        --- SCOUT'S TARGET ---
-        Keyword: "${keyword}"
-    `;
-}
-
-// --- Product Scout & Verifier Logic ---
-async function verifyLink(url) {
-    if (!url || !url.startsWith('http')) return false;
-    try {
-        const response = await fetch(url, { method: 'HEAD', timeout: 3500 });
-        return response.ok;
-    } catch (error) {
-        return false;
-    }
-}
-
-async function findProduct(keyword, apiKey, attempt = 1) {
-    const MAX_ATTEMPTS = 2;
-    const isRetry = attempt > 1;
-
-    const scoutPrompt = getScoutPrompt(keyword, isRetry);
-    const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: scoutPrompt }] }] })
-        }
-    );
-
-    if (!response.ok) return null;
-
-    try {
-        const data = await response.json();
-        const rawText = data.candidates[0].content.parts[0].text;
-        const result = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
-        
-        // Basic validation of the result
-        if (result && result.name && result.specificProductLink) {
-            return result;
-        }
-    } catch (e) {
-        // If parsing fails or validation fails, and we have attempts left, retry.
-        if (attempt < MAX_ATTEMPTS) {
-            console.log(`Scout mission for "${keyword}" failed on attempt ${attempt}. Retrying...`);
-            return findProduct(keyword, apiKey, attempt + 1);
-        }
-    }
-    return null; // Return null if all attempts fail
-}
-
-
-// =================================================================
-// MAIN HANDLER
-// =================================================================
 exports.handler = async function(event) {
     if (event.httpMethod === "OPTIONS") {
-        return { statusCode: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" } };
+        return {
+            statusCode: 204,
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+            body: "",
+        };
     }
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
@@ -126,60 +19,100 @@ exports.handler = async function(event) {
     try {
         const body = JSON.parse(event.body || "{}");
         const { category, title, description } = body;
-        if (!title || !category) return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+
+        if (!title || !category) {
+            return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+        }
 
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
-        if (!GEMINI_KEY) throw new Error("API key not configured.");
+        if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
-        // --- Step 1: The Analyst ---
-        const analystPrompt = getAnalystPrompt(category, title, description);
-        const analystResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
+        // --- Refined, Single-Call Prompt ---
+        let systemInstructions = '';
+        if (category === 'eco') {
+            systemInstructions = `You are an Eco-Friendly product analyst for the Indian market. Recommendations must be from Indian e-commerce sites (Flipkart, Amazon.in, etc.).`;
+        } else if (category === 'food') {
+            systemInstructions = `You are a Health Food analyst for the Indian market. Recommendations must be from Indian grocery sites (BigBasket, Blinkit, etc.).`;
+        } else if (category === 'cosmetic') {
+            systemInstructions = `You are a Safe Cosmetics analyst for the Indian market. Recommendations must be from Indian beauty sites (Nykaa, Myntra, etc.).`;
+        }
+
+        const prompt = `
+            ${systemInstructions}
+
+            **Task:** Analyze the user's product. Find a representative image for the user's product and for each of your recommendations. Return a single, clean JSON object. Do not include any text, notes, or markdown formatting outside the final JSON object.
+
+            **JSON Output Structure (MUST follow this exactly):**
+            \`\`\`json
+            {
+              "productName": "User's Product Name",
+              "productImage": "A valid, direct URL to a high-quality image of the user's product.",
+              "isRecommended": false,
+              "verdict": "A short, clear verdict on the product.",
+              "summary": "A detailed analysis in Markdown format.",
+              "recommendations": {
+                "title": "A relevant title for the recommendations.",
+                "items": [
+                  {
+                    "name": "Recommended Product 1",
+                    "description": "A short, compelling description.",
+                    "image": "A valid, direct URL to a high-quality image of the recommendation.",
+                    "link": "A valid, working URL to the product page."
+                  }
+                ]
+              }
+            }
+            \`\`\`
+
+            --- USER INPUT ---
+            Title: ${title}
+            Description: ${description || "No description provided"}
+        `;
+
+        const modelToUse = "gemini-2.0-flash";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
+
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: analystPrompt }] }] })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
-        if (!analystResponse.ok) throw new Error("The initial AI analysis failed.");
-        const analystData = await analystResponse.json();
-        const analystResult = JSON.parse(analystData.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // --- Step 2 & 3: The Scouts & The Verifier ---
-        const scoutKeywords = analystResult.scoutKeywords || [];
-        const scoutPromises = scoutKeywords.map(keyword => findProduct(keyword, GEMINI_KEY));
-        const scoutResults = (await Promise.all(scoutPromises)).filter(Boolean);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Gemini API Error: ${errorData.error.message}`);
+        }
 
-        const verifiedItems = await Promise.all(scoutResults.map(async (item) => {
-            const isLinkValid = await verifyLink(item.specificProductLink);
-            let finalLink = isLinkValid ? item.specificProductLink : item.categorySearchLink;
-            finalLink = addAffiliateTag(finalLink);
+        const data = await response.json();
+        const rawText = data.candidates[0].content.parts[0].text;
+
+        // --- Bulletproof Parsing Logic ---
+        try {
+            const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
             return {
-                name: item.name,
-                description: item.description,
-                image: item.image,
-                link: finalLink,
+                statusCode: 200,
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify(jsonResponse)
             };
-        }));
-
-        // --- Final Assembly ---
-        const finalResponse = {
-            productName: analystResult.productName,
-            productImage: analystResult.productImage,
-            isRecommended: analystResult.isRecommended,
-            verdict: analystResult.verdict,
-            summary: analystResult.summary,
-            recommendations: {
-                title: analystResult.recommendationsTitle,
-                items: verifiedItems,
-            },
-        };
-
-        return {
-            statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(finalResponse),
-        };
+        } catch (parsingError) {
+            // If parsing fails, DO NOT CRASH. Return the raw text as a fallback.
+            console.error("JSON parsing failed. AI returned malformed text:", rawText);
+            return {
+                statusCode: 200, // Still a success, because we got a response.
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({
+                    isFallback: true,
+                    fallbackText: `The AI returned a response that could not be structured. Here is the raw text:\n\n---\n\n${rawText}`
+                })
+            };
+        }
 
     } catch (e) {
         console.error("Backend Error:", e);
-        return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + e.message }) };
+        return {
+            statusCode: 500,
+            headers: { "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify({ error: "An internal server error occurred: " + e.message })
+        };
     }
 };
