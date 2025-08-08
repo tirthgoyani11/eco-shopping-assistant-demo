@@ -1,10 +1,3 @@
-You're right, sometimes copying from the formatted blocks can be tricky. I apologize for the trouble.
-
-Here is the complete, corrected code for your `gemini-proxy.js` file in a plain text block. This should be much easier to copy and paste.
-
-This is the version that uses the stable `gemini-1.5-flash-preview-0514` model, which should fix the `403` error.
-
-````javascript
 const axios = require("axios");
 
 // --- The Image Scout Function ---
@@ -56,9 +49,11 @@ exports.handler = async function(event) {
             Title: ${title}
         `;
 
-        // Using a specific, stable Flash model version.
+        // Using the standard name for the latest Flash model.
+        const modelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
+        
         const geminiAnalystResponse = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${GEMINI_KEY}`,
+            modelUrl,
             { contents: [{ parts: [{ text: analystPrompt }] }] }
         );
         const analystResult = JSON.parse(geminiAnalystResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```g, "").trim());
@@ -88,9 +83,9 @@ exports.handler = async function(event) {
             ${JSON.stringify(analystResult.scoutKeywords)}
         `;
 
-        // Using the same stable Flash model version here as well.
+        // Using the same model URL for the second call.
         const geminiDecoratorResponse = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${GEMINI_KEY}`,
+            modelUrl,
             { contents: [{ parts: [{ text: decoratorPrompt }] }] }
         );
         const decoratedItems = JSON.parse(geminiDecoratorResponse.data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```g, "").trim()).items;
@@ -122,4 +117,3 @@ exports.handler = async function(event) {
         return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred: " + (e.response ? (e.response.data.error ? e.response.data.error.message : JSON.stringify(e.response.data)) : e.message) }) };
     }
 };
-````
