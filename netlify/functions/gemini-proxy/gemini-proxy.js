@@ -1,82 +1,89 @@
-const https = require('https');
+const axios = require("axios");
 
 exports.handler = async function(event) {
-    console.log("--- Eco Jinner Function Execution Started ---");
-
+    // Standard boilerplate for Netlify functions
     if (event.httpMethod !== "POST") {
-        console.log(`Request rejected. Method was ${event.httpMethod}, not POST.`);
         return { statusCode: 405, body: "Method Not Allowed" };
     }
 
     try {
-        console.log("Step 1: Parsing request body...");
         const body = JSON.parse(event.body || "{}");
-        const { category, title } = body;
-        if (!title || !category) throw new Error("Title and category are required.");
-        console.log(`Successfully parsed body. Category: ${category}, Title: ${title}`);
+        const { category, title, description } = body;
 
-        console.log("Step 2: Checking for API Key...");
+        if (!title || !category) {
+            return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+        }
+
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
-        if (!GEMINI_KEY) throw new Error("CRITICAL: GEMINI_API_KEY environment variable not found on the server!");
-        console.log("API Key found successfully.");
+        if (!GEMINI_KEY) {
+            console.error("CRITICAL: GEMINI_API_KEY environment variable not found!");
+            throw new Error("API key is not configured on the server.");
+        }
 
-        console.log("Step 3: Constructing AI Prompt...");
-        const prompt = `Analyze this product: Category: ${category}, Title: ${title}`;
-        const postData = JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-            ],
+        // --- Optimized Single-Call Prompt ---
+        let systemInstructions = '';
+        if (category === 'eco') {
+            systemInstructions = You are an Eco-Friendly product analyst for the Indian market. Recommendations must be from Indian e-commerce sites (Flipkart, Amazon.in, etc.).;
+        } else if (category === 'food') {
+            systemInstructions = You are a Health Food analyst for the Indian market. Recommendations must be from Indian grocery sites (BigBasket, Blinkit, etc.).;
+        } else if (category === 'cosmetic') {
+            systemInstructions = You are a Safe Cosmetics analyst for the Indian market. Recommendations must be from Indian beauty sites (Nykaa, Myntra, etc.).;
+        }
+
+        const prompt = `
+            ${systemInstructions}
+
+            *Task:* Analyze the user's product. Find a representative image for the user's product and for each of your recommendations. For each recommendation, you MUST generate a reliable link. Prioritize direct product links, but if you cannot find one, use a Google search link as a fallback. Return a single, clean JSON object.
+
+            *JSON Output Structure (MUST follow this exactly):*
+            \\\`json
+            {
+              "productName": "User's Product Name",
+              "productImage": "A valid, direct URL to a high-quality image of the user's product.",
+              "isRecommended": false,
+              "verdict": "A short, clear verdict on the product.",
+              "summary": "A detailed analysis in Markdown format.",
+              "recommendations": {
+                "title": "A relevant title for the recommendations.",
+                "items": [
+                  {
+                    "name": "Recommended Product 1",
+                    "description": "A short, compelling description.",
+                    "image": "A valid, direct URL to a high-quality image of the recommendation.",
+                    "link": "A valid, working URL to the product page OR a Google search link."
+                  }
+                ]
+              }
+            }
+            \\\`
+
+            --- USER INPUT ---
+            Title: ${title}
+            Description: ${description || "No description provided"}
+        `;
+
+        const modelToUse = "gemini-1.5-flash-latest"; // A fast and capable model
+        const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY};
+
+        const response = await axios.post(apiUrl, {
+            contents: [{ parts: [{ text: prompt }] }]
         });
-        console.log("Prompt constructed.");
-
-        const options = {
-            hostname: 'generativelanguage.googleapis.com',
-            path: `/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) }
-        };
-
-        console.log("Step 4: Sending request to Google API...");
-        const data = await new Promise((resolve, reject) => {
-            const req = https.request(options, (res) => {
-                let responseBody = '';
-                res.on('data', (chunk) => { responseBody += chunk; });
-                res.on('end', () => {
-                    console.log(`Received response from Google with status: ${res.statusCode}`);
-                    if (res.statusCode >= 200 && res.statusCode < 300) {
-                        resolve(JSON.parse(responseBody));
-                    } else {
-                        reject(new Error(`API request failed with status ${res.statusCode}: ${responseBody}`));
-                    }
-                });
-            });
-            req.on('error', (e) => reject(e));
-            req.write(postData);
-            req.end();
-        });
-        console.log("Step 5: Successfully received and parsed data from Google.");
-
-        const rawText = data.candidates[0].content.parts[0].text;
         
-        console.log("Step 6: Sending successful response to frontend.");
+        const rawText = response.data.candidates[0].content.parts[0].text;
+        const jsonResponse = JSON.parse(rawText.replace(/json/g, "").replace(//g, "").trim());
+
         return {
             statusCode: 200,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ result: rawText }) // Send back simple text for this test
+            body: JSON.stringify(jsonResponse)
         };
 
     } catch (e) {
-        console.error("--- FATAL ERROR IN FUNCTION ---");
-        console.error("Error Message:", e.message);
-        console.error("Error Stack:", e.stack);
+        console.error("--- FATAL ERROR IN FUNCTION ---", e.response ? e.response.data : e.message);
         return {
             statusCode: 500,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ error: "An internal server error occurred. Check the function logs for details." })
+            body: JSON.stringify({ error: "An internal server error occurred: " + (e.response ? e.response.data.error.message : e.message) })
         };
     }
 };
