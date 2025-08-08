@@ -27,26 +27,26 @@ exports.handler = async function(event) {
         const GEMINI_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
-        // --- NEW PROMPT WITH GOOGLE SEARCH INSTRUCTIONS ---
+        // --- NEW, STRICTER PROMPT ---
         let systemInstructions = '';
         if (category === 'eco') {
-            systemInstructions = `You are an Eco-Friendly product analyst for the Indian market. Your recommendations should be for sustainable alternatives.`;
+            systemInstructions = `You are an Eco-Friendly product analyst for the Indian market.`;
         } else if (category === 'food') {
-            systemInstructions = `You are a Health Food analyst for the Indian market. Your recommendations should be for healthy food options.`;
+            systemInstructions = `You are a Health Food analyst for the Indian market.`;
         } else if (category === 'cosmetic') {
-            systemInstructions = `You are a Safe Cosmetics analyst for the Indian market. Your recommendations should be for products with safe, clean ingredients.`;
+            systemInstructions = `You are a Safe Cosmetics analyst for the Indian market.`;
         }
 
         const prompt = `
             ${systemInstructions}
 
-            **Task:** Analyze the user's product. Find a representative image for the user's product and for each recommendation. For each recommendation, you MUST generate a Google search link. Return a single, clean JSON object.
+            **Task:** Analyze the user's product. Find a representative image for the user's product and for each recommendation. For each recommendation, you MUST generate a Google search link that is strictly filtered for India and excludes sponsored results. Return a single, clean JSON object.
 
-            **Link Generation Rules (VERY IMPORTANT):**
+            **Link Generation Rules (CRITICAL):**
             1.  The "link" field MUST be a valid Google search URL.
-            2.  The search query should be for the recommended product, targeted to the Indian market (e.g., add "buy online India").
-            3.  To avoid ads, you MUST add "-sponsored" to the end of the search query.
-            4.  Example Link Format: "https://www.google.com/search?q=stainless+steel+bottle+buy+online+india+-sponsored"
+            2.  To guarantee the search is for **India only**, you MUST include the parameter "&cr=countryIN" in the URL.
+            3.  To **remove sponsored ads**, you MUST add "-sponsored" to the end of the search query (before the country parameter).
+            4.  **Correct Example:** "https://www.google.com/search?q=stainless+steel+bottle+-sponsored&cr=countryIN"
 
             **JSON Output Structure (MUST follow this exactly):**
             \`\`\`json
@@ -63,7 +63,7 @@ exports.handler = async function(event) {
                     "name": "Recommended Product 1",
                     "description": "A short, compelling description.",
                     "image": "A valid, direct URL to a high-quality image of the recommendation.",
-                    "link": "A valid Google search URL following the rules above."
+                    "link": "A valid Google search URL following all the rules above."
                   }
                 ]
               }
