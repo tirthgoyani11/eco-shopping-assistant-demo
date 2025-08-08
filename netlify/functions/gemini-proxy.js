@@ -1,7 +1,6 @@
 const fetch = require("node-fetch");
 
 exports.handler = async function(event) {
-    // 1. Standard Pre-flight and Method Checks
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
@@ -13,73 +12,67 @@ exports.handler = async function(event) {
             body: "",
         };
     }
-
     if (event.httpMethod !== "POST") {
-        return {
-            statusCode: 405,
-            body: "Method Not Allowed",
-            headers: { "Access-Control-Allow-Origin": "*" },
-        };
+        return { statusCode: 405, body: "Method Not Allowed" };
     }
 
     try {
-        // 2. Parse Input from Frontend
         const body = JSON.parse(event.body || "{}");
         const { title, description } = body;
 
         if (!title && !description) {
-            return {
-                statusCode: 400,
-                headers: { "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ error: "Please provide a product title or description." }),
-            };
+            return { statusCode: 400, body: JSON.stringify({ error: "Please provide a product title or description." }) };
         }
 
-        // 3. Construct the Advanced AI Prompt
-        const userInput = `Title: ${title}\nDescription: ${description || "No description provided"}`;
+        const GEMINI_KEY = process.env.GEMINI_API_KEY;
+        if (!GEMINI_KEY) throw new Error("API key not configured on the server.");
 
-        const systemPrompt = `
-            You are "Eco Jinner," an expert sustainability analyst. Your goal is to provide a comprehensive, actionable analysis of a product based on user input.
+        const prompt = `
+            You are "Eco Jinner Pro," a world-class sustainability analyst. Your task is to analyze the provided product information and return a structured JSON object.
 
-            Follow these steps precisely:
+            **Analysis Instructions:**
+            1.  **Overall Score:** Provide an "overallScore" from 0 to 100, where 100 is perfectly sustainable.
+            2.  **Category Scores:** Provide scores (0-100) for three categories: "materials", "manufacturing", and "endOfLife".
+            3.  **Verdict:** Provide a short, one-sentence "verdict" (e.g., "Excellent eco-friendly choice," "Poor environmental profile").
+            4.  **Summary:** Write a detailed "summary" (2-3 paragraphs) in Markdown explaining your reasoning.
+            5.  **Recommendations:**
+                * If the score is below 70, provide an "alternatives" array with objects containing a "name" and a real "link".
+                * If the score is 70 or above, provide a "shopping" array with objects containing a "name" and a real "link" to buy similar products.
+                * If applicable, provide a "diy" object with a "title" and a "steps" array for a DIY alternative.
 
-            1.  **Initial Analysis:** Briefly analyze the product's sustainability based on its title and description. Mention its materials, potential manufacturing impact, and end-of-life considerations.
+            **JSON Output Structure (MUST follow this exactly, no extra text or markdown formatting):**
+            \`\`\`json
+            {
+              "overallScore": 85,
+              "scores": {
+                "materials": 90,
+                "manufacturing": 80,
+                "endOfLife": 85
+              },
+              "verdict": "A solid, sustainable option for daily hydration.",
+              "summary": "This stainless steel water bottle is an excellent choice...",
+              "recommendations": {
+                "shopping": [
+                  { "name": "Hydro Flask 24oz", "link": "https://www.amazon.com/..." },
+                  { "name": "Klean Kanteen Classic", "link": "https://www.kleankanteen.com/..." }
+                ]
+              }
+            }
+            \`\`\`
 
-            2.  **Eco-Friendliness Verdict:** State clearly whether the product is generally "Eco-Friendly" or "Not Eco-Friendly".
-
-            3.  **Actionable Recommendations (This is the most important part):**
-                * **If the product is NOT Eco-Friendly:**
-                    * Provide a section titled "### 🌍 Eco-Friendly Alternatives".
-                    * Suggest 2-3 specific types of alternative products. For each alternative, find and include a real, direct shopping link from a major e-commerce site (like Amazon, Etsy, EarthHero, etc.).
-                * **If the product IS Eco-Friendly:**
-                    * Provide a section titled "### 🛒 Where to Find Similar Products".
-                    * Find and include 2-3 real, direct shopping links to similar, highly-rated eco-friendly products on major e-commerce sites.
-                * **If you cannot find any shopping links OR the item is simple:**
-                    * Provide a section titled "### 🔨 DIY At-Home Alternative".
-                    * Briefly outline the steps to make a similar item at home and list the necessary materials.
-
-            4.  **Formatting:** Use Markdown for clear formatting (headings, bold text, and bullet points). Ensure all links are functional.
+            --- USER INPUT ---
+            Title: ${title}
+            Description: ${description || "No description provided"}
         `;
 
-        const fullPrompt = `${systemPrompt}\n\n--- USER INPUT ---\n${userInput}`;
+        const modelToUse = "gemini-2.0-flash";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_KEY}`;
 
-        // 4. Securely Call the Gemini API
-        const GEMINI_KEY = process.env.GEMINI_API_KEY;
-        if (!GEMINI_KEY) {
-            throw new Error("API key is not configured on the server.");
-        }
-
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: fullPrompt }]
-                    }]
-                })
-            }
-        );
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -88,12 +81,15 @@ exports.handler = async function(event) {
         }
 
         const data = await response.json();
+        const rawText = data.candidates[0].content.parts[0].text;
+        
+        // Clean and parse the JSON from the AI's response
+        const jsonResponse = JSON.parse(rawText.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // 5. Return the Response to the Frontend
         return {
             statusCode: 200,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ result: JSON.stringify(data, null, 2) })
+            body: JSON.stringify(jsonResponse) // Return the parsed JSON directly
         };
 
     } catch (e) {
@@ -101,13 +97,7 @@ exports.handler = async function(event) {
         return {
             statusCode: 500,
             headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({
-                result: JSON.stringify({
-                    error: {
-                        message: "An internal server error occurred: " + e.message
-                    }
-                })
-            })
+            body: JSON.stringify({ error: "An internal server error occurred: " + e.message })
         };
     }
 };
