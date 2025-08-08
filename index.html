@@ -14,12 +14,10 @@
             --accent-primary: #10b981; /* emerald-500 */
             --accent-secondary: #34d399; /* emerald-400 */
         }
-        html {
-            scroll-behavior: smooth;
-        }
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #020617; /* slate-950 */
+            /* This is the correct setting for a scrollable page with a fixed background */
             overflow-x: hidden;
         }
         
@@ -60,6 +58,7 @@
         /* --- Animations & Transitions --- */
         .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
         .revealed { opacity: 1; transform: translateY(0); }
+        .recommendation-card img { aspect-ratio: 1 / 1; object-fit: cover; }
         .recommendation-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .recommendation-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
 
@@ -67,13 +66,6 @@
         .prose a { color: var(--accent-secondary); text-decoration: none; }
         .prose a:hover { text-decoration: underline; }
         .prose h1, .prose h2, .prose h3, .prose strong { color: inherit; }
-        
-        /* --- Star Rating for Feedback --- */
-        .star-rating input[type="radio"] { display: none; }
-        .star-rating label { cursor: pointer; transition: color 0.2s; }
-        .star-rating input[type="radio"]:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label { color: #f59e0b; } /* amber-500 */
     </style>
 </head>
 <body class="text-gray-200 antialiased">
@@ -83,26 +75,20 @@
         <div class="aurora aurora-3" style="top: 80%; left: 30%;"></div>
     </div>
 
+    <!-- The main container is now a standard block element that will scroll naturally -->
     <div class="container mx-auto p-4 md:p-6 min-h-screen flex flex-col">
         <header class="text-center my-12 flex-shrink-0">
             <h1 class="text-5xl md:text-6xl font-extrabold text-white">Eco Jinner</h1>
             <p class="text-white/60 mt-2">The Intelligent Product Analyst</p>
-            <nav class="mt-6 flex justify-center gap-4 md:gap-6 text-white/80">
-                <a href="#analyzer" class="hover:text-emerald-400 transition">Analyzer</a>
-                <a href="#features" class="hover:text-emerald-400 transition">Features</a>
-                <a href="#samples" class="hover:text-emerald-400 transition">Samples</a>
-                <a href="#about" class="hover:text-emerald-400 transition">About</a>
-            </nav>
         </header>
 
-        <!-- Command Bar Section -->
-        <section id="analyzer" class="w-full max-w-2xl mx-auto mb-8 flex-shrink-0">
+        <!-- Command Bar -->
+        <div class="w-full max-w-2xl mx-auto mb-8 flex-shrink-0">
             <div id="command-bar" class="command-bar glass-ui p-2 rounded-full flex items-center gap-2">
                 <div id="category-display" class="flex-shrink-0 flex items-center gap-2 pl-3 text-white/80"></div>
-                <input type="text" id="prod-title" class="command-input text-lg" placeholder="Analyze a product like 'plastic water bottle'...">
-                <button id="analyze-btn" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition disabled:bg-emerald-400/50" aria-label="Analyze Product">
-                    <svg id="analyze-icon" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <svg id="analyze-spinner" class="w-6 h-6 text-white animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <input type="text" id="prod-title" class="command-input text-lg" placeholder="Analyze a product...">
+                <button id="analyze-btn" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition disabled:bg-emerald-400/50">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
             </div>
             <div id="category-selector" class="flex justify-center gap-3 mt-4">
@@ -110,88 +96,26 @@
                 <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="food">🍎 Healthy Food</button>
                 <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" data-category="cosmetic">💄 Cosmetics</button>
             </div>
-        </section>
+        </div>
 
         <!-- Result Section -->
         <main id="result-container" class="flex-grow pb-12">
             <!-- Placeholder -->
-            <div id="placeholder-content" class="text-center text-white/60 text-lg">
-                <p>Your detailed analysis will appear here.</p>
-                <p class="text-sm mt-2">Select a category, type a product, and press Enter.</p>
+            <div id="placeholder-content" class="flex h-full justify-center items-center">
+                <p class="text-white/60 text-lg text-center">Your detailed analysis will appear here.</p>
             </div>
             <!-- Loading Skeleton -->
             <div id="loading-skeleton" class="hidden animate-pulse">
-                <div class="glass-ui p-6 rounded-2xl">
-                    <div class="flex flex-col md:flex-row gap-6"><div class="w-full md:w-1/3 h-48 bg-white/10 rounded-lg"></div><div class="w-full md:w-2/3 space-y-3"><div class="h-8 bg-white/10 rounded-md"></div><div class="h-5 bg-white/10 rounded-md w-3/4"></div><div class="h-20 bg-white/10 rounded-md mt-4"></div></div></div>
-                </div>
-                <div class="mt-6"><div class="h-8 bg-white/10 rounded-md w-1/2 mb-4"></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="h-48 bg-white/10 rounded-lg"></div><div class="h-48 bg-white/10 rounded-lg"></div><div class="h-48 bg-white/10 rounded-lg"></div></div></div>
+                <div class="flex flex-col md:flex-row gap-6"><div class="w-full md:w-1/3 h-48 bg-white/10 rounded-lg"></div><div class="w-full md:w-2/3 space-y-3"><div class="h-8 bg-white/10 rounded-md"></div><div class="h-5 bg-white/10 rounded-md w-3/4"></div><div class="h-20 bg-white/10 rounded-md mt-4"></div></div></div><hr class="border-white/10 my-6"><div class="h-8 bg-white/10 rounded-md w-1/2 mb-4"></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="h-48 bg-white/10 rounded-lg"></div><div class="h-48 bg-white/10 rounded-lg"></div><div class="h-48 bg-white/10 rounded-lg"></div></div>
             </div>
             <!-- Result Content -->
             <div id="result-content" class="hidden"></div>
         </main>
-
-        <!-- New Content Sections -->
-        <section id="features" class="py-16">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-white">A Smarter Way to Choose</h2>
-                <p class="text-white/60 mt-2">Empowering your decisions with AI-driven insights.</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <div class="glass-ui p-6 rounded-xl text-center">
-                    <h3 class="text-xl font-bold text-white mb-2">Instant Analysis</h3>
-                    <p class="text-white/70">Get immediate, comprehensive reports on products across various categories, from eco-impact to health considerations.</p>
-                </div>
-                <div class="glass-ui p-6 rounded-xl text-center">
-                    <h3 class="text-xl font-bold text-white mb-2">Actionable Recommendations</h3>
-                    <p class="text-white/70">Beyond analysis, we provide links to better alternatives, DIY solutions, or top-rated products to make your next step easy.</p>
-                </div>
-                <div class="glass-ui p-6 rounded-xl text-center">
-                    <h3 class="text-xl font-bold text-white mb-2">Multi-Category Expertise</h3>
-                    <p class="text-white/70">Whether you're focused on sustainability, nutrition, or clean cosmetics, our AI has the specialized knowledge you need.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="samples" class="py-16">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-white">See It In Action</h2>
-                <p class="text-white/60 mt-2">Example analyses to showcase the insights you'll receive.</p>
-            </div>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                <!-- Sample 1: Bad Eco Product -->
-                <div class="recommendation-card glass-ui p-4 rounded-lg">
-                    <h4 class="font-bold text-white">Analysis of: "Single-Use Coffee Pods"</h4>
-                    <p class="text-sm text-red-400 font-semibold my-2">Verdict: Not Recommended</p>
-                    <p class="text-sm text-white/70">Generates significant plastic and aluminum waste with a high carbon footprint from production. Most pods are not biodegradable and contaminate recycling streams.</p>
-                </div>
-                <!-- Sample 2: Good Eco Product -->
-                <div class="recommendation-card glass-ui p-4 rounded-lg">
-                    <h4 class="font-bold text-white">Analysis of: "Beeswax Food Wraps"</h4>
-                    <p class="text-sm text-emerald-400 font-semibold my-2">Verdict: Highly Recommended</p>
-                    <p class="text-sm text-white/70">A fantastic, reusable alternative to plastic wrap. Made from natural, compostable materials, reducing single-use plastic waste in kitchens.</p>
-                </div>
-                <!-- Sample 3: DIY Alternative -->
-                <div class="recommendation-card glass-ui p-4 rounded-lg">
-                    <h4 class="font-bold text-white">Analysis of: "Commercial All-Purpose Cleaner"</h4>
-                    <p class="text-sm text-amber-400 font-semibold my-2">Verdict: Use with Caution</p>
-                    <p class="text-sm text-white/70">Many contain harsh chemicals. A DIY solution with vinegar and water is often cheaper, less toxic, and reduces plastic bottle waste.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="about" class="py-16 text-center max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold text-white mb-4">About Eco Jinner</h2>
-            <p class="text-white/70 leading-relaxed">Eco Jinner was born from a simple idea: what if everyone could have an expert analyst in their pocket? We use the power of generative AI to cut through marketing noise and provide clear, unbiased evaluations of the products we use every day. Our mission is to make conscious consumerism accessible to all, empowering you to make choices that align with your values, whether they relate to the environment, your health, or your well-being. For questions or feedback, please reach out to <a href="mailto:contact@ecojinner.dev" class="text-emerald-400 hover:underline">contact@ecojinner.dev</a>.</p>
-        </section>
-
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- DOM Element References ---
         const analyzeBtn = document.getElementById('analyze-btn');
-        const analyzeIcon = document.getElementById('analyze-icon');
-        const analyzeSpinner = document.getElementById('analyze-spinner');
         const prodTitleInput = document.getElementById('prod-title');
         const categorySelector = document.getElementById('category-selector');
         const categoryDisplay = document.getElementById('category-display');
@@ -201,7 +125,6 @@
 
         let selectedCategory = null;
 
-        // --- Category Management ---
         function updateCategory(category, buttonEl) {
             selectedCategory = category;
             const icon = buttonEl.textContent.split(' ')[0];
@@ -222,111 +145,40 @@
             }
         });
         
-        // Set default category on load
+        // Set default category
         updateCategory('eco', document.querySelector('.category-btn[data-category="eco"]'));
 
-        // --- UI State Management ---
-        function setButtonLoading(isLoading) {
-             analyzeBtn.disabled = isLoading;
-             if(isLoading) {
-                analyzeIcon.classList.add('hidden');
-                analyzeSpinner.classList.remove('hidden');
-             } else {
-                analyzeIcon.classList.remove('hidden');
-                analyzeSpinner.classList.add('hidden');
-             }
-        }
+        async function handleAnalysis() {
+            const title = prodTitleInput.value.trim();
+            if (!title) { alert("Please enter a product name."); return; }
+            if (!selectedCategory) { alert("Please select a category."); return; }
 
-        function showLoadingState() {
-            setButtonLoading(true);
+            analyzeBtn.disabled = true;
             placeholderContent.classList.add('hidden');
             resultContent.classList.add('hidden');
             loadingSkeleton.classList.remove('hidden');
-            resultContent.innerHTML = ''; // Clear previous results
-        }
 
-        function hideLoadingState() {
-            setButtonLoading(false);
-            loadingSkeleton.classList.add('hidden');
-        }
-
-        // --- Core Analysis Logic ---
-        async function handleAnalysis() {
-            const title = prodTitleInput.value.trim();
-            if (!title) { 
-                alert("Please enter a product name to analyze."); 
-                return; 
-            }
-            if (!selectedCategory) { 
-                alert("Please select a category."); 
-                return; 
-            }
-
-            showLoadingState();
-
-            // This is the new, more structured prompt for the Gemini API
-            const prompt = `
-                Analyze the product "${title}" for the category "${selectedCategory}".
-                Your response MUST be a single, valid JSON object, without any surrounding text or markdown.
-
-                The JSON object must have this exact structure:
-                {
-                  "productName": "string",
-                  "verdict": "string (e.g., 'Highly Recommended', 'Not Recommended', 'Good Alternative')",
-                  "isRecommended": boolean,
-                  "summary": "A detailed analysis in Markdown format. Explain the reasoning behind the verdict.",
-                  "recommendationType": "ALTERNATIVE" | "BUY" | "DIY",
-                  "recommendations": {
-                    "title": "string (e.g., 'Better Alternatives', 'Where to Buy', 'DIY Guide')",
-                    "items": [
-                      {
-                        "name": "string",
-                        "description": "string",
-                        "link": "string (A direct search link, e.g., Google Shopping, Amazon, or a tutorial link)"
-                      }
-                    ]
-                  }
-                }
-
-                Instructions for the fields:
-                - isRecommended: true if the product is generally good for its category, false otherwise.
-                - summary: Be detailed and informative. Use Markdown for formatting (like lists or bold text).
-                - recommendationType: 
-                    - Use "ALTERNATIVE" if the original product is not recommended.
-                    - Use "BUY" if the original product IS recommended.
-                    - Use "DIY" if a homemade version is a great alternative.
-                - recommendations.items: Provide 2-3 relevant items. For links, generate direct search URLs (e.g., "https://www.google.com/search?tbm=shop&q=..."). For DIY, link to a search for tutorials.
-            `;
-            
             try {
-                // NOTE: The original code used a Netlify function proxy. 
-                // For this self-contained example, we'll use the direct Gemini API endpoint structure.
-                // You would need to replace this with your actual backend endpoint.
-                const apiKey = ""; // API Key is handled by the environment, leave empty.
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                
-                const response = await fetch(apiUrl, {
+                const response = await fetch('/.netlify/functions/gemini-proxy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                    body: JSON.stringify({ category: selectedCategory, title, description: "" }),
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    const err = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                    throw new Error(err.error || `An unknown server error occurred.`);
                 }
 
-                const result = await response.json();
-                const text = result.candidates[0].content.parts[0].text;
-                const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                const data = JSON.parse(cleanedText);
-                
+                const data = await response.json();
                 renderResults(data);
 
             } catch (e) {
                 placeholderContent.innerHTML = `<p class="text-red-400 text-center"><strong>Request Failed:</strong><br>${e.message}</p>`;
                 placeholderContent.classList.remove('hidden');
             } finally {
-                hideLoadingState();
+                analyzeBtn.disabled = false;
+                loadingSkeleton.classList.add('hidden');
             }
         }
 
@@ -337,71 +189,39 @@
             }
         });
 
-        // --- Rendering Logic ---
         function renderResults(data) {
-            const verdictColor = data.isRecommended ? 'text-emerald-400' : 'text-red-400';
-
-            const recommendationsHtml = data.recommendations.items.map((item, index) => `
-                <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${300 + index * 100}ms;">
-                    <h4 class="font-bold text-white flex-grow">${item.name}</h4>
-                    <p class="text-sm text-white/60 mb-3 flex-grow">${item.description}</p>
-                    <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="mt-auto block text-center w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-600 transition">
-                        Find Out More
-                    </a>
-                </div>
-            `).join('');
-            
-            const feedbackHtml = `
-                <div class="mt-6 pt-6 border-t border-white/10 text-center">
-                    <h3 class="text-lg font-semibold text-white mb-3">Was this analysis helpful?</h3>
-                    <div id="feedback-section">
-                        <div class="star-rating flex flex-row-reverse justify-center text-4xl text-slate-600 mb-4">
-                            <input type="radio" id="star5" name="rating" value="5" aria-label="5 stars"/><label for="star5" title="5 stars">★</label>
-                            <input type="radio" id="star4" name="rating" value="4" aria-label="4 stars"/><label for="star4" title="4 stars">★</label>
-                            <input type="radio" id="star3" name="rating" value="3" aria-label="3 stars"/><label for="star3" title="3 stars">★</label>
-                            <input type="radio" id="star2" name="rating" value="2" aria-label="2 stars"/><label for="star2" title="2 stars">★</label>
-                            <input type="radio" id="star1" name="rating" value="1" aria-label="1 star"/><label for="star1" title="1 star">★</label>
-                        </div>
-                        <div id="feedback-thanks" class="text-center text-emerald-400 font-semibold hidden">
-                            Thank you for your feedback!
-                        </div>
-                    </div>
-                </div>
-            `;
-
             resultContent.innerHTML = `
                 <div class="reveal glass-ui p-6 rounded-2xl">
-                    <div class="flex flex-col">
-                        <h2 class="text-3xl font-bold text-white">${data.productName}</h2>
-                        <p class="text-lg font-semibold ${verdictColor} mb-4">${data.verdict}</p>
-                        <div class="prose max-w-none text-white/80">${marked.parse(data.summary)}</div>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="md:w-1/3 flex-shrink-0"><img src="${data.productImage}" alt="${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image+Not+Found';"></div>
+                        <div class="md:w-2/3">
+                            <h2 class="text-3xl font-bold text-white">${data.productName}</h2>
+                            <p class="text-lg font-semibold ${data.isRecommended ? 'text-emerald-400' : 'text-red-400'} mb-4">${data.verdict}</p>
+                            <div class="prose max-w-none text-white/80">${marked.parse(data.summary)}</div>
+                        </div>
                     </div>
-                    ${feedbackHtml}
                 </div>
-                <div class="reveal mt-8" style="transition-delay: 200ms;">
+                <div class="reveal mt-6" style="transition-delay: 200ms;">
                     <h3 class="text-2xl font-bold text-white mb-4 ml-2">${data.recommendations.title}</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${recommendationsHtml}
+                        ${data.recommendations.items.map((item, index) => `
+                            <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${300 + index * 100}ms;">
+                                <img src="${item.image}" alt="${item.name}" class="w-full h-40 rounded-md mb-3" onerror="this.src='https://placehold.co/400x400/2c5364/e5e7eb?text=Image';">
+                                <h4 class="font-bold text-white flex-grow">${item.name}</h4>
+                                <p class="text-sm text-white/60 mb-3 flex-grow">${item.description}</p>
+                                <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="mt-auto block text-center w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-600 transition">
+                                    View Product
+                                </a>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
             resultContent.classList.remove('hidden');
-            
             // Trigger reveal animations
             setTimeout(() => {
                 document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed'));
             }, 10);
-
-            // Add event listener for feedback stars
-            const feedbackSection = document.getElementById('feedback-section');
-            if (feedbackSection) {
-                feedbackSection.querySelectorAll('.star-rating input').forEach(star => {
-                    star.addEventListener('change', () => {
-                        document.getElementById('feedback-thanks').classList.remove('hidden');
-                        feedbackSection.querySelector('.star-rating').classList.add('hidden');
-                    });
-                });
-            }
         }
     });
     </script>
