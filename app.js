@@ -1,12 +1,12 @@
 /**
  * =================================================================
- * Eco Jinner - Definitive Application Logic (v11 - Complete)
+ * Eco Jinner - Definitive Application Logic (v12 - Final Fixed)
  * =================================================================
  * This script handles all client-side logic, including:
  * - Multi-page navigation and mobile menu functionality.
  * - Dynamic content loading and filtering for the Discover page.
  * - 3D background rendering with Three.js.
- * - Core AI analysis functionality with modern animations.
+ * - Core AI analysis functionality with modern animations and bug fixes.
  * - Management of all UI panels (History) and modals.
  */
 
@@ -61,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmModalOverlay: document.getElementById('confirm-modal-overlay'),
         confirmModalCancel: document.getElementById('confirm-modal-cancel'),
         confirmModalConfirm: document.getElementById('confirm-modal-confirm'),
-        // Discover Page Elements
         productSpotlight: document.getElementById('product-spotlight'),
         discoverFilters: document.getElementById('discover-filters'),
         editorsPicksSection: document.getElementById('editors-picks-section'),
@@ -143,7 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         elements.analyzeBtn.disabled = true;
         elements.placeholderContent.classList.add('hidden');
+        
+        // BUG FIX: Explicitly clear previous results and hide the container
+        elements.resultContent.innerHTML = '';
         elements.resultContent.classList.add('hidden');
+        
         elements.loadingAnimation.classList.remove('hidden');
 
         try {
@@ -171,7 +174,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderResults = (data) => {
         const summaryHtml = data.summary ? marked.parse(data.summary) : '<p>No summary provided.</p>';
-        elements.resultContent.innerHTML = `...`; // Full result rendering logic here
+        elements.resultContent.innerHTML = `
+            <article class="reveal">
+                <div class="glass-ui p-6 rounded-2xl">
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="md:w-1/3 flex-shrink-0 reveal reveal-delay-1"><img src="${data.productImage}" alt="${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x400/1f2937/e5e7eb?text=Image+Not+Found'; this.onerror=null;"></div>
+                        <div class="md:w-2/3">
+                            <h2 class="text-3xl font-bold text-white reveal reveal-delay-2">${data.productName}</h2>
+                            <p class="text-lg font-semibold ${data.isRecommended ? 'text-emerald-400' : 'text-red-400'} my-4 reveal reveal-delay-3">${data.verdict}</p>
+                            <div class="prose prose-invert max-w-none reveal reveal-delay-4">${summaryHtml}</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <section class="mt-12">
+                <h3 class="text-2xl font-bold text-white mb-6 ml-2 reveal reveal-delay-4">${data.recommendations.title}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${(data.recommendations.items || []).map((item, index) => `
+                        <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${500 + index * 100}ms;">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-48 rounded-md mb-4 object-cover" onerror="this.src='https://placehold.co/400x400/1f2937/e5e7eb?text=Image'; this.onerror=null;">
+                            <h4 class="font-bold text-white flex-grow">${item.name}</h4>
+                            <p class="text-sm text-white/60 my-3 flex-grow">${item.description}</p>
+                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="mt-auto block text-center w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-600 transition">View Product</a>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>`;
         elements.resultContent.classList.remove('hidden');
         setTimeout(() => document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed')), 10);
     };
@@ -191,7 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.historyList.innerHTML = `<div class="p-4 text-center text-white/60">No past analyses found.</div>`;
             return;
         }
-        elements.historyList.innerHTML = state.history.map(item => `...`).join(''); // History item rendering
+        elements.historyList.innerHTML = state.history.map(item => `
+            <div class="history-item p-4 -mx-4 rounded-lg hover:bg-white/5 transition cursor-pointer" data-history-id="${item.id}">
+                <p class="font-bold text-white truncate">${item.title}</p>
+                <p class="text-sm text-white/60">Category: ${item.category}</p>
+            </div>`).join('');
     };
     
     const handleHistoryClick = (e) => {
@@ -285,7 +317,19 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.discoverGrid.innerHTML = filtered.map(renderProductCard).join('');
     };
 
-    const renderProductCard = (product) => `...`; // Product card HTML template
+    const renderProductCard = (product) => {
+        return `
+            <div class="discover-card glass-ui p-4 rounded-lg flex flex-col">
+                <img src="${product.image}" alt="${product.name}" class="w-full h-48 rounded-md mb-4 object-cover">
+                <h4 class="font-bold text-white">${product.name}</h4>
+                <p class="text-xs text-white/50 mb-2">by ${product.brand}</p>
+                <p class="text-sm text-white/70 my-2 flex-grow">${product.description}</p>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    ${product.tags.map(tag => `<span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-full">${tag}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    };
 
     // --- 9. Event Listeners ---
     elements.navLinks.forEach(link => {
@@ -329,41 +373,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
-/**
- * =================================================================
- * Eco Jinner - Definitive Application Logic (v12 - Bug Fix)
- * =================================================================
- */
-
-document.addEventListener('DOMContentLoaded', () => {
-    // ... (all other code remains the same) ...
-
-    // --- 6. Main Analysis Logic ---
-    const handleAnalysis = async () => {
-        const title = elements.prodTitleInput.value.trim();
-        if (!title) {
-            showNotification("Please enter a product name.", 'error');
-            return;
-        }
-        elements.analyzeBtn.disabled = true;
-        elements.placeholderContent.classList.add('hidden');
-        
-        // --- BUG FIX ---
-        // Explicitly clear previous results and hide the container
-        elements.resultContent.innerHTML = ''; 
-        elements.resultContent.classList.add('hidden');
-        
-        elements.loadingAnimation.classList.remove('hidden');
-
-        try {
-            // ... (rest of the analysis logic remains the same) ...
-        } catch (e) {
-            // ... (error handling remains the same) ...
-        } finally {
-            // ... (finally block remains the same) ...
-        }
-    };
-    
-    // ... (rest of the file remains the same) ...
-});
-
