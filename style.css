@@ -1,29 +1,39 @@
-/* --- CSS Variables and Global Setup --- */
+/* =================================================================
+   Eco Jinner - Definitive Stylesheet (v5)
+   ================================================================= */
+
+/* --- 1. CSS Variables & Global Setup --- */
 :root {
-    --accent-primary: #10b981; /* emerald-500 */
-    --accent-secondary: #34d399; /* emerald-400 */
-    --bg-color: #020617; /* slate-950 */
-    --glass-bg: rgba(30, 41, 59, 0.5);
+    --accent-primary: #10b981;
+    --accent-secondary: #34d399;
+    --bg-color: #020617;
+    --glass-bg: rgba(15, 23, 42, 0.5); /* slate-900 with opacity */
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
+
+html {
+    scroll-behavior: smooth;
+}
+
 body { 
     font-family: 'Inter', sans-serif; 
     background-color: var(--bg-color);
+    color: #e2e8f0; /* slate-200 */
     overflow-x: hidden;
 }
 
-/* --- Aurora Background Animation --- */
-.aurora-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-.aurora { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.25; }
-.aurora-1 { width: 600px; height: 600px; background: #38bdf8; animation: aurora-anim-1 20s infinite alternate; }
-.aurora-2 { width: 500px; height: 500px; background: #818cf8; animation: aurora-anim-2 25s infinite alternate-reverse; }
-.aurora-3 { width: 400px; height: 400px; background: var(--accent-primary); animation: aurora-anim-3 30s infinite alternate; }
-@keyframes aurora-anim-1 { 0% { transform: translate(10vw, 10vh); } 100% { transform: translate(40vw, 60vh); } }
-@keyframes aurora-anim-2 { 0% { transform: translate(80vw, 20vh); } 100% { transform: translate(20vw, 80vh); } }
-@keyframes aurora-anim-3 { 0% { transform: translate(50vw, 90vh); } 100% { transform: translate(10vw, 10vh); } }
+/* --- 2. 3D Canvas & Core Layout --- */
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.5;
+}
 
-/* --- Glass UI & Core Component Styles --- */
 .glass-ui {
     background: var(--glass-bg);
     backdrop-filter: blur(24px);
@@ -32,28 +42,119 @@ body {
     box-shadow: var(--glass-shadow);
     transition: background 0.3s, border 0.3s, box-shadow 0.3s;
 }
+
+/* --- 3. Component Styles --- */
 .command-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.5); border-color: var(--accent-secondary); }
+.command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.4); border-color: var(--accent-secondary); }
 .command-input { background: transparent; border: none; outline: none; color: white; width: 100%; }
-.category-btn.active { background: rgba(16, 185, 129, 0.3); border-color: var(--accent-secondary); color: white; }
-.recommendation-card { transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; border: 1px solid var(--glass-border); }
-.recommendation-card:hover { transform: translateY(-8px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); border-color: var(--accent-secondary); }
-.recommendation-card img { aspect-ratio: 1 / 1; object-fit: cover; }
 
-/* --- Animations & Transitions --- */
-.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
-.revealed { opacity: 1; transform: translateY(0); }
+.category-btn.active {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: var(--accent-secondary);
+}
 
-/* --- History Panel & Settings Modal --- */
-#history-panel, #settings-modal, #settings-modal-overlay { transition: all 0.3s ease-in-out; }
-.history-item { border-bottom: 1px solid var(--glass-border); }
-.history-item:last-child { border-bottom: none; }
-.modal-overlay { backdrop-filter: blur(4px); }
+.recommendation-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    border: 1px solid var(--glass-border);
+}
+.recommendation-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border-color: var(--accent-secondary);
+}
+.recommendation-card img {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
 
-/* --- Notification Modal --- */
-#notification-modal { transition: opacity 0.3s ease, transform 0.3s ease; }
+/* --- 4. Gen-Z Loading Animation --- */
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+}
+.glitch-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-secondary);
+    position: relative;
+    animation: glitch-cycle 4s steps(1, end) infinite;
+}
+.glitch-text::before,
+.glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-color);
+    overflow: hidden;
+    clip: rect(0, 900px, 0, 0);
+}
+.glitch-text::before {
+    left: 2px;
+    text-shadow: -2px 0 #ff00c1;
+    animation: glitch-anim-1 1.5s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+    left: -2px;
+    text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+    animation: glitch-anim-2 1s infinite linear alternate-reverse;
+}
 
-/* --- Form elements in Modal --- */
+@keyframes glitch-cycle {
+    0% { content: 'Analyzing vibes...'; }
+    25% { content: 'Checking facts...'; }
+    50% { content: 'Consulting the oracle...'; }
+    75% { content: 'Finalizing verdict...'; }
+    100% { content: 'Almost there...'; }
+}
+
+@keyframes glitch-anim-1 {
+    0% { clip: rect(42px, 9999px, 44px, 0); }
+    100% { clip: rect(2px, 9999px, 92px, 0); }
+}
+
+@keyframes glitch-anim-2 {
+    0% { clip: rect(12px, 9999px, 99px, 0); }
+    100% { clip: rect(1px, 9999px, 48px, 0); }
+}
+
+/* --- 5. Staggered Result Animation --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- 6. Panels & Modals --- */
+#history-panel, #settings-modal, #settings-modal-overlay {
+    transition: all 0.3s ease-in-out;
+}
+.history-item {
+    border-bottom: 1px solid var(--glass-border);
+}
+.history-item:last-child {
+    border-bottom: none;
+}
+.modal-overlay {
+    backdrop-filter: blur(4px);
+}
+
+/* --- 7. Notification Modal --- */
+#notification-modal {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* --- 8. Form elements in Modal --- */
 .form-input {
     background-color: rgba(0,0,0,0.2);
     border: 1px solid var(--glass-border);
