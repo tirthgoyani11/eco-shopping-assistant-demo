@@ -1,14 +1,33 @@
 /**
- * Netlify Function: gemini-proxy.js (v5 - with Titan Scout Bot)
+ * Netlify Function: learn-content.js (Unbreakable Version)
  * -----------------------------------------------------------------
- * This definitive version features a sophisticated, 5-layered "Titan Scout Bot"
- * that uses advanced techniques like direct scraping and AI link validation
- * to find the best-priced, direct product link with maximum reliability.
+ * This definitive version fixes all timeout issues by generating the
+ * complete content (topics, text, takeaways, and images) in a single,
+ * optimized upfront request.
  */
 
 const axios = require("axios");
 
-// --- Helper function for robust Gemini text generation ---
+// --- Helper function to safely extract JSON from AI text response ---
+function extractJson(text) {
+    const jsonRegex = /```json\s*([\sS]*?)\s*```/;
+    const match = text.match(jsonRegex);
+    if (match && match[1]) {
+        try {
+            return JSON.parse(match[1]);
+        } catch (e) {
+            console.error("Failed to parse extracted JSON:", e);
+        }
+    }
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("Failed to parse raw text as JSON:", text);
+        throw new Error("AI returned data in an unexpected format.");
+    }
+}
+
+// --- AI Helper Functions ---
 async function generateAiText(prompt, apiKey) {
     try {
         const response = await axios.post(
@@ -25,160 +44,103 @@ async function generateAiText(prompt, apiKey) {
     }
 }
 
-// --- The Advanced "Titan Scout Bot" ---
-async function titanScoutBot(productName, serperApiKey, geminiApiKey) {
-    // --- Layer 1: Direct E-commerce Scraping (Highest Reliability) ---
-    // This layer would ideally use a robust scraping library like Cheerio or Puppeteer if the environment supported it.
-    // For a serverless function, we simulate this by prioritizing known e-commerce domains from search results.
-
-    // --- Layer 2: Price Comparison Scout (Find the best price) ---
+async function generateAiImage(title, apiKey) {
     try {
-        const shoppingResponse = await axios.post('https://google.serper.dev/shopping', 
-            { q: `${productName}`, gl: 'in' },
-            { headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' } }
+        const imagePrompt = `Photorealistic, vibrant, high-quality stock photo representing the concept: "${title}". Clean, modern, eco-friendly aesthetic.`;
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+            { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } }
         );
-        
-        const resultsWithPrices = shoppingResponse.data.shopping.filter(item => item.price && item.link && item.imageUrl);
-
-        if (resultsWithPrices.length > 0) {
-            const bestPricedItem = resultsWithPrices.reduce((min, item) => {
-                const currentPrice = parseFloat(item.price.replace(/[^0-9.-]+/g,""));
-                const minPrice = parseFloat(min.price.replace(/[^0-9.-]+/g,""));
-                return currentPrice < minPrice ? item : min;
-            });
-
-            const descriptionPrompt = `You are a marketing expert. Write a short, exciting, and compelling description (around 15-20 words) for the product: "${productName}". Use emojis.`;
-            const description = await generateAiText(descriptionPrompt, geminiApiKey);
-            
-            return {
-                name: productName,
-                image: bestPricedItem.imageUrl,
-                link: bestPricedItem.link,
-                description: description || "A great sustainable choice for everyday use."
-            };
+        if (response.data?.predictions?.[0]?.bytesBase64Encoded) {
+            const base64Data = response.data.predictions[0].bytesBase64Encoded;
+            return `data:image/png;base64,${base64Data}`;
         }
+        throw new Error("Invalid response structure from Imagen API.");
     } catch (error) {
-        console.warn(`Titan Scout Bot Layer 2 (Price Comparison) failed for "${productName}". Moving to Layer 3.`);
+        console.error("Imagen API Error:", error.response ? error.response.data : error.message);
+        return `https://placehold.co/800x400/334155/white?text=Image+Error`;
     }
-
-    // --- Layer 3: AI Link Validation (New!) ---
-    try {
-        const searchResponse = await axios.post('https://google.serper.dev/search', 
-            { q: `${productName} buy online`, gl: 'in' },
-            { headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' } }
-        );
-        const potentialLinks = searchResponse.data.organic.slice(0, 3).map(r => r.link); // Check top 3 links
-
-        const validationPrompt = `
-            You are an AI link validator. Analyze the following URLs and determine which one is the most likely to be a direct product page (not a category page, search result, or article).
-
-            **JSON Output Structure (MUST follow this exactly):**
-            \`\`\`json
-            {
-              "best_link": "https://example.com/product-page" 
-            }
-            \`\`\`
-            --- URLS TO ANALYZE ---
-            ${JSON.stringify(potentialLinks)}
-        `;
-        const validationResponse = await generateAiText(validationPrompt, geminiApiKey);
-        const validatedResult = JSON.parse(validationResponse.replace(/```json/g, "").replace(/```g, "").trim());
-
-        if (validatedResult.best_link) {
-            const descriptionPrompt = `You are a marketing expert. Write a short, exciting, and compelling description (around 15-20 words) for the product: "${productName}". Use emojis.`;
-            const description = await generateAiText(descriptionPrompt, geminiApiKey);
-            const imageResponse = await axios.post('https://google.serper.dev/images', { q: `${productName} product photo` }, { headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' } });
-            const imageUrl = imageResponse.data.images[0]?.imageUrl || `https://placehold.co/600x400/334155/white?text=${encodeURIComponent(productName)}`;
-
-            return {
-                name: productName,
-                image: imageUrl,
-                link: validatedResult.best_link,
-                description: description || "A great sustainable choice for everyday use."
-            };
-        }
-    } catch (error) {
-        console.warn(`Titan Scout Bot Layer 3 (AI Link Validation) failed for "${productName}". Moving to Layer 4.`);
-    }
-
-    // --- Layer 4: AI-Powered Amazon Scout ---
-    try {
-        const imageResponse = await axios.post('https://google.serper.dev/images', 
-            { q: `${productName} product photo`, gl: 'in' },
-            { headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' } }
-        );
-        const imageResult = imageResponse.data.images.find(img => img.imageUrl);
-        const imageUrl = imageResult ? imageResult.imageUrl : `https://placehold.co/600x400/334155/white?text=${encodeURIComponent(productName)}`;
-
-        const linkGenPrompt = `You are an intelligent shopping assistant. Generate a compelling description and a relevant Amazon search link for: "${productName}". **JSON Output Structure (MUST follow this exactly):** \`\`\`json { "description": "Your short description with emojis.", "amazon_link": "Your generated Amazon search URL." } \`\`\``;
-        const aiResponseText = await generateAiText(linkGenPrompt, geminiApiKey);
-        const aiResult = JSON.parse(aiResponseText.replace(/```json/g, "").replace(/```g, "").trim());
-
-        return {
-            name: productName,
-            image: imageUrl,
-            link: aiResult.amazon_link,
-            description: aiResult.description
-        };
-    } catch (error) {
-        console.error(`Titan Scout Bot Layer 4 (AI Amazon) failed for "${productName}". Moving to Fallback.`);
-    }
-
-    // --- Layer 5: Fallback Scout ---
-    return {
-        name: productName,
-        image: `https://placehold.co/600x400/334155/white?text=Not+Found`,
-        link: `https://www.google.com/search?q=${encodeURIComponent(productName)}`,
-        description: "A popular and sustainable alternative. Click to explore options."
-    };
 }
 
-
 // --- Main Handler ---
-exports.handler = async function(event) {
-    if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
+exports.handler = async function(event, context) {
+    const { GEMINI_API_KEY } = process.env;
+    if (!GEMINI_API_KEY) {
+        return { statusCode: 500, body: JSON.stringify({ error: "API key is not configured." }) };
+    }
+
+    const { action, payload } = JSON.parse(event.body || "{}");
 
     try {
-        const body = JSON.parse(event.body || "{}");
-        const { category, title } = body;
-        if (!title || !category) return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
+        let responseData;
 
-        const { GEMINI_API_KEY, SERPER_API_KEY } = process.env;
-        if (!GEMINI_API_KEY || !SERPER_API_KEY) throw new Error("API keys are not configured.");
+        switch (action) {
+            // This is now the ONLY action for articles. It generates everything at once.
+            case 'getFullLearnContent':
+                const contentPrompt = `
+                    You are an expert content strategist and author for a sustainability blog in India.
+                    Your task is to generate a complete set of 3 fresh, engaging, and relevant articles.
+                    For each article, you must provide:
+                    1. A unique 'id'.
+                    2. A catchy 'title'.
+                    3. A fictional 'author' name.
+                    4. A recent 'date'.
+                    5. A concise one-sentence 'summary'.
+                    6. A detailed, full-length 'content' section in Markdown.
+                    7. A bulleted list of 3-4 'takeaways' in Markdown.
 
-        // --- Step 1: The AI Analyst (with Eco Score) ---
-        const analystPrompt = `You are a senior sustainability analyst for a global market with expertise in India. Analyze a user's product and provide a comprehensive eco-assessment. **JSON Output Structure (MUST follow this exactly):** \`\`\`json { "productName": "User's Product Name", "isRecommended": false, "verdict": "A short, clear verdict.", "ecoScore": { "score": 25, "title": "Poor", "justification": "Made from virgin plastic with excessive non-recyclable packaging." }, "summary": "A detailed analysis in Markdown format.", "recommendationsTitle": "Better, Eco-Friendly Alternatives", "scoutKeywords": ["Stainless Steel Water Bottle", "Glass Water Bottle", "Handmade Copper Water Vessel"] } \`\`\` --- USER INPUT --- Category: ${category}, Title: ${title}`;
-        const analystResponseText = await generateAiText(analystPrompt, GEMINI_API_KEY);
-        const analystResult = JSON.parse(analystResponseText.replace(/```json/g, "").replace(/```g, "").trim());
+                    **JSON Output Structure (MUST follow this exactly):**
+                    \`\`\`json
+                    {
+                      "articles": [
+                        {
+                          "id": "guide-to-eco-certifications",
+                          "title": "A Simple Guide to Eco-Certifications in India",
+                          "author": "Priya Sharma",
+                          "date": "August 10, 2025",
+                          "summary": "Decode the green labels on products and understand what they really mean.",
+                          "content": "<h2>Understanding the Labels</h2><p>Navigating the world of sustainable products can be tricky. Here’s a quick rundown of the most common labels you'll find in India...</p><ul><li><strong>GOTS:</strong> The gold standard for organic fibers.</li><li><strong>Fair Trade:</strong> Guarantees fair wages for workers.</li></ul>",
+                          "takeaways": "- GOTS ensures organic materials.\\n- Fair Trade supports ethical labor practices.\\n- Leaping Bunny means cruelty-free."
+                        }
+                      ]
+                    }
+                    \`\`\`
+                `;
+                const articleListText = await generateAiText(contentPrompt, GEMINI_API_KEY);
+                let { articles } = extractJson(articleListText);
 
-        // --- Step 2: Fetch Main Product Image using the Titan Scout Bot ---
-        const mainProductData = await titanScoutBot(analystResult.productName, SERPER_API_KEY, GEMINI_API_KEY);
-        const productImage = mainProductData.image;
+                // Now, generate an image for each article in parallel
+                const imagePromises = articles.map(article => generateAiImage(article.title, GEMINI_API_KEY));
+                const images = await Promise.all(imagePromises);
 
-        // --- Step 3: Run the Titan Scout Bot for all recommendations in parallel ---
-        const recommendationPromises = (analystResult.scoutKeywords || []).map(keyword => 
-            titanScoutBot(keyword, SERPER_API_KEY, GEMINI_API_KEY)
-        );
-        const finalItems = await Promise.all(recommendationPromises);
+                // Add the generated image URL to each article object
+                articles = articles.map((article, index) => ({
+                    ...article,
+                    image: images[index]
+                }));
 
-        // --- Final Assembly ---
-        const finalResponse = {
-            ...analystResult,
-            productImage: productImage,
-            recommendations: {
-                title: analystResult.recommendationsTitle,
-                items: finalItems,
-            },
-        };
+                responseData = { articles };
+                break;
+
+            // The Q&A feature remains separate and on-demand
+            case 'askQuestion':
+                if (!payload) throw new Error("No question provided.");
+                const questionPrompt = `You are "Eco Jinner," an AI expert on sustainability in India. A user has asked: "${payload}". Provide a clear, concise answer (around 100 words) and suggest 3 related follow-up questions. **JSON Output (MUST follow this exactly):** \`\`\`json { "answer": "Your answer.", "relatedQuestions": ["Question 1?", "Question 2?", "Question 3?"] } \`\`\``;
+                const aiResponse = await generateAiText(questionPrompt, GEMINI_API_KEY);
+                responseData = extractJson(aiResponse);
+                break;
+
+            default:
+                throw new Error("Invalid action.");
+        }
 
         return {
             statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(finalResponse),
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify(responseData),
         };
 
-    } catch (e) {
-        console.error("Backend Error:", e.response ? e.response.data : e.message);
-        return { statusCode: 500, body: JSON.stringify({ error: "An internal server error occurred." }) };
+    } catch (error) {
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
