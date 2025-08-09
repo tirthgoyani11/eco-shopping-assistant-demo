@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eco Jinner - The Definitive Analyst</title>
-    <meta name="description" content="Your AI-Powered analyst for sustainability, healthy food, and cosmetics. Get instant analysis and recommendations for better products.">
+    <title>EcoGenie - Your AI Sustainability Analyst</title>
+    <meta name="description" content="EcoGenie: Your AI-powered analyst for sustainability. Get instant analysis, discover eco-friendly products, and learn about conscious living.">
     
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,44 +26,46 @@
     <div class="relative min-h-screen flex flex-col">
         <!-- Header with Logo and Navigation -->
         <header class="w-full p-4 flex justify-between items-center flex-shrink-0 glass-ui sticky top-0 z-40">
-            <a href="#home" class="flex items-center gap-3 nav-link" aria-label="Eco Jinner Home">
-                <svg class="w-10 h-10 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>
-                <span class="text-xl font-bold text-white">Eco Jinner</span>
+            <a href="#home" class="flex items-center gap-3 nav-link" aria-label="EcoGenie Home">
+                <svg class="w-10 h-10 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.186m-1.5.186a6.01 6.01 0 01-1.5-.186m3.75 7.373a9.04 9.04 0 01-3.75 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-xl font-bold text-white">EcoGenie</span>
             </a>
             <nav class="hidden md:flex items-center gap-6">
-                <a href="#home" class="nav-link text-white/70 hover:text-white transition">Home</a>
+                <a href="#home" class="nav-link text-white/70 hover:text-white transition">Analyze</a>
                 <a href="#discover" class="nav-link text-white/70 hover:text-white transition">Discover</a>
                 <a href="#learn" class="nav-link text-white/70 hover:text-white transition">Learn</a>
             </nav>
             <div class="flex items-center gap-2">
-                <button id="history-btn" aria-label="View Analysis History" aria-controls="history-panel" class="control-btn">
+                <button id="history-btn" aria-label="View Analysis History" aria-controls="history-panel" class="control-btn p-2 rounded-full bg-white/5 transition">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
-                <button id="mobile-menu-btn" class="md:hidden control-btn" aria-label="Open menu" aria-controls="mobile-menu">
+                <button id="mobile-menu-btn" class="md:hidden control-btn p-2 rounded-full bg-white/5 transition" aria-label="Open menu" aria-controls="mobile-menu">
                     <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                 </button>
             </div>
         </header>
 
-        <!-- Main Content Area -->
+        <!-- Main Content Area where pages will be rendered -->
         <main id="main-content" class="flex-grow">
-            
             <!-- Home Page Content -->
             <div id="home" class="page-content">
-                 <div class="container mx-auto p-4 md:p-6 flex flex-col items-center">
-                    <h1 class="text-4xl md:text-5xl font-extrabold text-white text-center mt-8">The Intelligent Product Analyst</h1>
+                 <div class="container mx-auto p-4 md:p-6 flex flex-col items-center text-center">
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-white mt-8">Your AI Sustainability Analyst</h1>
+                    <p class="text-white/60 mt-2 max-w-2xl">Get instant analysis of any product, discover eco-friendly alternatives, and learn how to make more conscious choices.</p>
                     <div class="w-full max-w-2xl mx-auto my-8">
                         <div id="command-bar" role="search" class="command-bar glass-ui p-2 rounded-full flex items-center gap-2">
                             <div id="category-display" class="flex-shrink-0 flex items-center gap-2 pl-3 text-white/80"></div>
-                            <input type="text" id="prod-title" class="command-input text-lg" placeholder="Enter product name or details..." aria-label="Product name or details">
-                            <button id="analyze-btn" aria-label="Analyze Product" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-transform active:scale-95 disabled:bg-emerald-400/50">
+                            <input type="text" id="prod-title" class="command-input text-lg" placeholder="Analyze a product...">
+                            <button id="analyze-btn" aria-label="Analyze Product" class="flex-shrink-0 w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center hover:bg-teal-600 transition-transform active:scale-95">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             </button>
                         </div>
-                        <div id="category-selector" role="radiogroup" aria-label="Select analysis category" class="flex justify-center gap-3 mt-4">
-                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" role="radio" data-category="eco">🌿 Eco-Friendly</button>
-                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" role="radio" data-category="food">🍎 Healthy Food</button>
-                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition hover:border-emerald-400/50" role="radio" data-category="cosmetic">💄 Cosmetics</button>
+                        <div id="category-selector" role="radiogroup" class="flex justify-center gap-3 mt-4">
+                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition" role="radio" data-category="eco">🌿 Eco-Friendly</button>
+                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition" role="radio" data-category="food">🍎 Healthy Food</button>
+                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition" role="radio" data-category="cosmetic">💄 Cosmetics</button>
                         </div>
                     </div>
                     <section id="result-container" aria-live="polite" class="w-full max-w-5xl">
@@ -71,7 +73,7 @@
                             <p class="text-white/60 text-lg text-center">Your detailed analysis will appear here.</p>
                         </div>
                         <div id="loading-animation" class="hidden loader-container py-20">
-                            <div class="glitch-text" data-text="Analyzing vibes..."></div>
+                            <div class="glitch-text" data-text="Waking the Genie..."></div>
                             <p class="text-white/50">The genie is thinking...</p>
                         </div>
                         <div id="result-content" class="hidden"></div>
@@ -83,14 +85,7 @@
             <div id="discover" class="page-content hidden">
                 <div class="container mx-auto p-4 md:p-6">
                     <h1 class="text-4xl font-bold text-white text-center my-8">Discover Sustainable Products</h1>
-                    <section id="product-spotlight" class="mb-12 glass-ui p-6 rounded-2xl text-center hidden"></section>
-                    <div id="discover-filters" class="flex flex-wrap justify-center gap-3 mb-10"></div>
-                    <section id="editors-picks-section" class="mb-12 hidden">
-                        <h2 class="text-2xl font-bold text-white mb-6">Editor's Picks</h2>
-                        <div id="editors-picks-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-                    </section>
-                    <h2 class="text-2xl font-bold text-white mb-6">All Products</h2>
-                    <div id="discover-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    <div id="discover-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style="perspective: 1000px;"></div>
                 </div>
             </div>
 
@@ -99,28 +94,20 @@
                 <div class="container mx-auto p-4 md:p-6">
                     <div id="learn-list-view">
                         <h1 class="text-4xl font-bold text-white text-center my-8">The Learning Hub</h1>
-                        <section class="mb-12 max-w-2xl mx-auto">
-                            <h2 class="text-2xl font-bold text-white mb-4 text-center">Ask the AI Expert</h2>
-                            <div class="glass-ui p-2 rounded-full flex items-center gap-2">
-                                <input type="text" id="ai-question-input" class="command-input text-lg pl-3" placeholder="Ask about sustainability...">
-                                <button id="ai-question-btn" class="flex-shrink-0 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-transform active:scale-95">
-                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.456L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.456L16.5 14.25l.398 1.178a3.375 3.375 0 002.456 2.456L20.25 18l-1.178.398a3.375 3.375 0 00-2.456 2.456z"></path></svg>
-                                </button>
-                            </div>
-                            <div id="ai-answer-container" class="mt-4"></div>
-                        </section>
-                        <div id="article-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <div id="article-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style="perspective: 1000px;"></div>
                     </div>
                     <div id="learn-article-view" class="hidden max-w-4xl mx-auto"></div>
                 </div>
             </div>
         </main>
         
+        <!-- Footer -->
         <footer class="w-full text-center p-4 mt-auto flex-shrink-0">
-            <p class="text-sm text-white/40">&copy; 2025 Eco Jinner. All rights reserved.</p>
+            <p class="text-sm text-white/40">&copy; 2025 EcoGenie. All rights reserved.</p>
         </footer>
     </div>
     
+    <!-- Panels and Modals -->
     <aside id="history-panel" class="fixed top-0 right-0 h-full w-full max-w-md glass-ui p-6 transform translate-x-full z-50 overflow-y-auto flex flex-col">
         <div class="flex justify-between items-center mb-6 flex-shrink-0">
             <h2 class="text-2xl font-bold text-white">Analysis History</h2>
@@ -142,13 +129,13 @@
             </button>
         </div>
         <nav class="flex flex-col gap-4">
-            <a href="#home" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Home</a>
+            <a href="#home" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Analyze</a>
             <a href="#discover" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Discover</a>
             <a href="#learn" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Learn</a>
         </nav>
     </div>
 
-    <div id="confirm-modal-overlay" class="fixed inset-0 bg-black/60 z-50 hidden modal-overlay"></div>
+    <div id="confirm-modal-overlay" class="fixed inset-0 bg-black/60 z-50 hidden"></div>
     <div id="confirm-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm glass-ui p-6 rounded-2xl z-50 hidden">
         <h3 id="confirm-modal-title" class="text-lg font-bold text-white mb-4">Are you sure?</h3>
         <p id="confirm-modal-text" class="text-white/80 mb-6">This action will permanently delete your analysis history.</p>
@@ -158,7 +145,7 @@
         </div>
     </div>
 
-    <div id="notification-modal" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none">
+    <div id="notification-modal" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-teal-500 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none">
         <p id="notification-message"></p>
     </div>
 
