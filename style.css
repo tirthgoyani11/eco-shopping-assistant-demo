@@ -1,12 +1,12 @@
 /* =================================================================
-   Eco Jinner - Definitive Stylesheet (v12 - AI Learn Page)
+   EcoGenie - Definitive Stylesheet (Final Version)
    ================================================================= */
 
 /* --- 1. CSS Variables & Global Setup --- */
 :root {
-    --accent-primary: #10b981;
-    --accent-secondary: #34d399;
-    --bg-color: #020617;
+    --accent-primary: #2dd4bf; /* teal-400 */
+    --accent-secondary: #0d9488; /* teal-600 */
+    --bg-color: #0f172a; /* slate-900 */
     --glass-bg: rgba(15, 23, 42, 0.6);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -31,7 +31,6 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
-    opacity: 0.5;
 }
 
 .glass-ui {
@@ -55,7 +54,7 @@ body {
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: var(--accent-secondary);
+    background-color: var(--accent-primary);
     transform: scaleX(0);
     transform-origin: bottom right;
     transition: transform 0.25s ease-out;
@@ -77,17 +76,17 @@ body {
 }
 .control-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--accent-secondary);
+    border-color: var(--accent-primary);
 }
 
 /* --- 4. Component Styles --- */
 .command-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-secondary), 0 0 40px rgba(52, 211, 153, 0.4); border-color: var(--accent-secondary); }
+.command-bar:focus-within { box-shadow: 0 0 0 2px var(--accent-primary), 0 0 40px rgba(45, 212, 191, 0.4); border-color: var(--accent-primary); }
 .command-input { background: transparent; border: none; outline: none; color: white; width: 100%; }
 
 .category-btn.active {
-    background: rgba(16, 185, 129, 0.3);
-    border-color: var(--accent-secondary);
+    background: rgba(45, 212, 191, 0.2);
+    border-color: var(--accent-primary);
 }
 
 /* --- 5. Gen-Z Loading Animation --- */
@@ -102,7 +101,7 @@ body {
 .glitch-text {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--accent-secondary);
+    color: var(--accent-primary);
     position: relative;
     animation: glitch-cycle 4s steps(1, end) infinite;
 }
@@ -130,10 +129,10 @@ body {
 }
 
 @keyframes glitch-cycle {
-    0% { content: 'Analyzing vibes...'; }
-    25% { content: 'Checking facts...'; }
-    50% { content: 'Consulting the oracle...'; }
-    75% { content: 'Finalizing verdict...'; }
+    0% { content: 'Waking the Genie...'; }
+    25% { content: 'Consulting the cosmos...'; }
+    50% { content: 'Analyzing sustainability...'; }
+    75% { content: 'Granting your wish...'; }
     100% { content: 'Almost there...'; }
 }
 
@@ -185,7 +184,7 @@ body {
 }
 .filter-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--accent-secondary);
+    border-color: var(--accent-primary);
 }
 .filter-btn.active-filter {
     background-color: var(--accent-primary);
@@ -193,22 +192,19 @@ body {
     border-color: var(--accent-primary);
 }
 
-.discover-card, .article-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.discover-card:hover, .article-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+.tilt-card {
+    transition: transform 0.1s ease;
+    transform-style: preserve-3d;
 }
 
-/* --- 10. Learn Page Article View --- */
-.article-content .prose {
-    max-width: 100%;
+/* --- 10. Prose & Article View --- */
+.prose-invert a {
+    color: var(--accent-primary);
 }
 .article-content .prose h2 {
     font-size: 1.5em;
     margin-bottom: 1em;
-    color: var(--accent-secondary);
+    color: var(--accent-primary);
 }
 .article-content .prose ul {
     list-style-type: disc;
