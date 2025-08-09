@@ -1,15 +1,12 @@
 /**
- * Netlify Function: learn-content.js (Unbreakable Titan Engine)
+ * Netlify Function: learn-content.js (Titan Engine - Optimized)
  * -----------------------------------------------------------------
- * This definitive version is optimized for maximum resilience and performance.
- * Features: Caching, Retry with Exponential Backoff, Advanced Validation.
+ * This definitive version fixes timeout issues by optimizing the AI workflow.
+ * It generates a fast, text-only article list first, then generates the
+ * full content and unique AI image on-demand when a user clicks an article.
  */
 
 const axios = require("axios");
-
-// --- In-memory cache to store generated content for a short period ---
-const cache = new Map();
-const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 // --- Helper function to safely extract JSON from AI text response ---
 function extractJson(text) {
@@ -22,7 +19,6 @@ function extractJson(text) {
             console.error("Failed to parse extracted JSON:", e);
         }
     }
-    // Fallback for non-markdown responses
     try {
         return JSON.parse(text);
     } catch (e) {
@@ -81,27 +77,33 @@ exports.handler = async function(event, context) {
     }
 
     const { action, payload } = JSON.parse(event.body || "{}");
-    const cacheKey = `${action}-${JSON.stringify(payload)}`;
-
-    // Check cache first
-    if (cache.has(cacheKey) && (Date.now() - cache.get(cacheKey).timestamp < CACHE_DURATION_MS)) {
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify(cache.get(cacheKey).data),
-        };
-    }
 
     try {
         let responseData;
 
         switch (action) {
+            // Case 1: AI Content Strategist (Fast, Text-Only)
             case 'getArticleList':
-                const topicGeneratorPrompt = `You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas. For each, provide a catchy title, a fictional author, a recent date, and a concise summary. **JSON Output (MUST follow this exactly):** \`\`\`json { "articles": [ { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean.", "image": "https://placehold.co/800x400/16a34a/white?text=Eco+Labels" } ] } \`\`\``;
+                const topicGeneratorPrompt = `
+                    You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas.
+                    For each, provide a catchy title, a fictional author, a recent date, a concise summary, and a standard placeholder image URL.
+
+                    **JSON Output (MUST follow this exactly):**
+                    \`\`\`json
+                    {
+                      "articles": [
+                        { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean.", "image": "https://placehold.co/800x400/16a34a/white?text=Eco+Labels" },
+                        { "id": "zero-waste-kitchen", "title": "Zero-Waste Kitchen: 5 Easy Swaps", "author": "Rohan Desai", "date": "August 5, 2025", "summary": "Discover simple and affordable swaps to drastically reduce waste in your kitchen.", "image": "https://placehold.co/800x400/fbbf24/white?text=Kitchen+Swaps" },
+                        { "id": "clean-beauty-guide", "title": "Clean Beauty: 5 Ingredients to Avoid", "author": "Anjali Mehta", "date": "July 28, 2025", "summary": "Learn about common harmful chemicals in cosmetics and how to choose safer alternatives.", "image": "https://placehold.co/800x400/f472b6/white?text=Clean+Beauty" }
+                      ]
+                    }
+                    \`\`\`
+                `;
                 const articleListText = await generateAiText(topicGeneratorPrompt, GEMINI_API_KEY);
                 responseData = extractJson(articleListText);
                 break;
 
+            // Case 2: AI Author & Artist (On-Demand, Slower)
             case 'getArticleContent':
                 const { title, summary } = payload;
                 if (!title || !summary) throw new Error("Article title and summary are required.");
@@ -109,6 +111,7 @@ exports.handler = async function(event, context) {
                 const articlePrompt = `You are an expert on sustainable living in India. Write a detailed, engaging blog post based on this title and summary. Use Markdown. Title: ${title}. Summary: ${summary}`;
                 const keyTakeawaysPrompt = `Based on the article titled "${title}", generate a bulleted list of 3-4 "Key Takeaways".`;
 
+                // Generate text and the unique image in parallel for the single article
                 const [content, takeaways, image] = await Promise.all([
                     generateAiText(articlePrompt, GEMINI_API_KEY),
                     generateAiText(keyTakeawaysPrompt, GEMINI_API_KEY),
@@ -118,9 +121,10 @@ exports.handler = async function(event, context) {
                 responseData = { content, takeaways, image };
                 break;
 
+            // Case 3: AI Expert (Q&A)
             case 'askQuestion':
                 if (!payload) throw new Error("No question provided.");
-                const questionPrompt = `You are "Eco Jinner," an AI expert on sustainability in India. A user has asked the following question. Provide a clear, concise, and helpful answer (around 100-150 words). Then, suggest 3 related follow-up questions the user might have. User's Question: "${payload}". **JSON Output Structure (MUST follow this exactly):** \`\`\`json { "answer": "Your detailed answer goes here.", "relatedQuestions": ["Follow-up question 1?", "Follow-up question 2?", "Follow-up question 3?"] } \`\`\``;
+                const questionPrompt = `You are "Eco Jinner," an AI expert on sustainability in India. A user has asked the following question. Provide a clear, concise, and helpful answer (around 100-150 words). Then, suggest 3 related follow-up questions. User's Question: "${payload}". **JSON Output (MUST follow this exactly):** \`\`\`json { "answer": "Your detailed answer goes here.", "relatedQuestions": ["Follow-up question 1?", "Follow-up question 2?", "Follow-up question 3?"] } \`\`\``;
                 const aiResponse = await generateAiText(questionPrompt, GEMINI_API_KEY);
                 responseData = extractJson(aiResponse);
                 break;
@@ -128,9 +132,6 @@ exports.handler = async function(event, context) {
             default:
                 throw new Error("Invalid action.");
         }
-        
-        // Store successful response in cache
-        cache.set(cacheKey, { timestamp: Date.now(), data: responseData });
 
         return {
             statusCode: 200,
