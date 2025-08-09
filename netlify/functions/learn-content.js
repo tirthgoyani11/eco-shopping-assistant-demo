@@ -2,7 +2,7 @@
  * Netlify Function: learn-content.js (Fixed & Optimized)
  * ----------------------------------------------------
  * This version fixes the timeout bug by re-architecting the AI workflow.
- * It now generates images upfront with the article list for better performance.
+ * It now generates images on-demand for a single article, not all at once.
  */
 
 const axios = require("axios");
@@ -71,21 +71,9 @@ exports.handler = async function(event, context) {
 
         switch (action) {
             case 'getArticleList':
-                const topicGeneratorPrompt = `You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas. For each, provide a catchy title, a fictional author, a recent date, and a concise summary. **JSON Output (MUST follow this exactly):** \`\`\`json { "articles": [ { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean." } ] } \`\`\``;
+                const topicGeneratorPrompt = `You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas. For each, provide a catchy title, a fictional author, a recent date, and a concise summary. **JSON Output (MUST follow this exactly):** \`\`\`json { "articles": [ { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean.", "image": "https://placehold.co/800x400/16a34a/white?text=Eco+Labels" } ] } \`\`\``;
                 const articleListText = await generateAiText(topicGeneratorPrompt, GEMINI_API_KEY);
-                let { articles } = extractJson(articleListText);
-
-                // Now, generate an image for each article in parallel
-                const imagePromises = articles.map(article => generateAiImage(article.title, GEMINI_API_KEY));
-                const images = await Promise.all(imagePromises);
-
-                // Add the generated image URL to each article object
-                articles = articles.map((article, index) => ({
-                    ...article,
-                    image: images[index]
-                }));
-
-                responseData = { articles };
+                responseData = extractJson(articleListText);
                 break;
 
             case 'getArticleContent':
@@ -95,12 +83,14 @@ exports.handler = async function(event, context) {
                 const articlePrompt = `You are an expert on sustainable living in India. Write a detailed, engaging blog post based on this title and summary. Use Markdown. Title: ${title}. Summary: ${summary}`;
                 const keyTakeawaysPrompt = `Based on the article titled "${title}", generate a bulleted list of 3-4 "Key Takeaways".`;
 
-                const [content, takeaways] = await Promise.all([
+                // Generate text and image for the single article
+                const [content, takeaways, image] = await Promise.all([
                     generateAiText(articlePrompt, GEMINI_API_KEY),
-                    generateAiText(keyTakeawaysPrompt, GEMINI_API_KEY)
+                    generateAiText(keyTakeawaysPrompt, GEMINI_API_KEY),
+                    generateAiImage(title, GEMINI_API_KEY)
                 ]);
 
-                responseData = { content, takeaways };
+                responseData = { content, takeaways, image };
                 break;
 
             case 'askQuestion':
