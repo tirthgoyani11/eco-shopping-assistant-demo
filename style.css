@@ -176,7 +176,7 @@ body {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* --- 9. Discover & Learn Page Cards --- */
+/* --- 9. Discover & Learn Page Cards with 3D Tilt --- */
 .filter-btn {
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
