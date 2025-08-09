@@ -1,9 +1,9 @@
 /**
  * =================================================================
- * EcoGenie - Definitive Application Logic (with Borealis 3D Wave)
+ * EcoGenie - Definitive Application Logic (Fixed 3D Background)
  * =================================================================
- * This script has been rebuilt from scratch for maximum reliability and performance.
- * It features a new, advanced "Borealis Particle Wave" 3D background.
+ * This version fixes the 3D background by making it more subtle
+ * and atmospheric to ensure UI text is always readable.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentAnalysisData: null,
     };
 
-    // --- 2. NEW 3D BACKGROUND ENGINE: "BOREALIS PARTICLE WAVE" ---
+    // --- 2. FIXED 3D BACKGROUND ENGINE ---
 
     const init3DBackground = () => {
         if (typeof THREE === 'undefined') return;
@@ -72,62 +72,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.z = 30;
+        // Push the camera further back to make the effect more distant
+        camera.position.z = 100;
 
-        const particleCount = 10000;
+        const particleCount = 7000; // Increased count for a fuller feel
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
 
         const color = new THREE.Color();
-        const radius = 50;
+        const radius = 200; // Increased radius to spread particles out
 
         for (let i = 0; i < particleCount; i++) {
             const i3 = i * 3;
-            positions[i3] = (Math.random() - 0.5) * radius;
-            positions[i3 + 1] = (Math.random() - 0.5) * radius;
-            positions[i3 + 2] = (Math.random() - 0.5) * radius;
+            // Distribute particles in a larger sphere
+            const phi = Math.acos((2 * Math.random()) - 1);
+            const theta = Math.random() * Math.PI * 2;
+
+            positions[i3] = radius * Math.cos(theta) * Math.sin(phi);
+            positions[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+            positions[i3 + 2] = radius * Math.cos(phi);
             
-            color.setHSL(0.5 + Math.random() * 0.2, 0.7, 0.5 + Math.random() * 0.2);
+            // Use a more subtle color palette
+            color.setHSL(0.5 + Math.random() * 0.1, 0.7, 0.5 + Math.random() * 0.1);
             colors[i3] = color.r;
             colors[i3 + 1] = color.g;
             colors[i3 + 2] = color.b;
-
-            sizes[i] = Math.random() * 2 + 1;
         }
 
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                time: { value: 1.0 },
-                pointTexture: { value: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/sprites/spark1.png' ) }
-            },
-            vertexShader: `
-                attribute float size;
-                attribute vec3 color;
-                varying vec3 vColor;
-                void main() {
-                    vColor = color;
-                    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-                    gl_PointSize = size * ( 300.0 / -mvPosition.z );
-                    gl_Position = projectionMatrix * mvPosition;
-                }
-            `,
-            fragmentShader: `
-                uniform sampler2D pointTexture;
-                varying vec3 vColor;
-                void main() {
-                    gl_FragColor = vec4( vColor, 1.0 );
-                    gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
-                }
-            `,
+        const material = new THREE.PointsMaterial({
+            size: 0.5, // Reduced particle size for subtlety
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.7, // Reduced opacity
             blending: THREE.AdditiveBlending,
-            depthTest: false,
-            transparent: true
+            depthWrite: false
         });
 
         const particleSystem = new THREE.Points(geometry, material);
@@ -144,19 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
             
-            particleSystem.rotation.y = elapsedTime * 0.05;
+            particleSystem.rotation.y = elapsedTime * 0.02; // Slower rotation
             
-            const positions = particleSystem.geometry.attributes.position.array;
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3;
-                const x = positions[i3];
-                const y = positions[i3 + 1];
-                positions[i3 + 1] = Math.sin(elapsedTime + x * 0.5) * 2.0;
-            }
-            particleSystem.geometry.attributes.position.needsUpdate = true;
-
-            camera.position.x += (mouse.x * 5 - camera.position.x) * 0.02;
-            camera.position.y += (mouse.y * 5 - camera.position.y) * 0.02;
+            camera.position.x += (mouse.x * 10 - camera.position.x) * 0.02;
+            camera.position.y += (mouse.y * 10 - camera.position.y) * 0.02;
             camera.lookAt(scene.position);
 
             renderer.render(scene, camera);
