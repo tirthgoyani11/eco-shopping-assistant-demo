@@ -1,14 +1,7 @@
 /**
  * =================================================================
- * Eco Jinner - Definitive Application Logic (v12 - Final Fixed)
+ * Eco Jinner - Definitive Application Logic (v13 - AI Images)
  * =================================================================
- * This script handles all client-side logic, including:
- * - Multi-page navigation and mobile menu functionality.
- * - Dynamic content loading and filtering for the Discover page.
- * - AI-powered Q&A and on-demand article generation for the Learn Hub.
- * - 3D background rendering with Three.js.
- * - Core AI analysis functionality with modern animations and bug fixes.
- * - Management of all UI panels (History) and modals.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -388,19 +381,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Failed to generate article content.');
             const data = await response.json();
             
-            renderFullArticle(articleData, data.content, data.takeaways);
+            // **FIX IS HERE**: Pass the new AI-generated image (data.image) to the render function
+            renderFullArticle(articleData, data.content, data.takeaways, data.image);
         } catch (error) {
             elements.learnArticleView.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
         }
     };
 
-    const renderFullArticle = (article, content, takeaways) => {
+    // **FIX IS HERE**: Accept the new `imageUrl` parameter
+    const renderFullArticle = (article, content, takeaways, imageUrl) => {
         elements.learnArticleView.innerHTML = `
             <button id="back-to-learn" class="glass-ui px-4 py-2 rounded-full text-sm mb-8 hover:border-emerald-400/50">&larr; Back to Articles</button>
             <article class="article-content">
                 <h1 class="text-4xl font-bold text-white mb-4">${article.title}</h1>
                 <p class="text-white/60 mb-6">By ${article.author} | ${article.date}</p>
-                <img src="${article.image}" alt="${article.title}" class="w-full rounded-lg mb-8">
+                <!-- Use the new imageUrl here -->
+                <img src="${imageUrl}" alt="${article.title}" class="w-full rounded-lg mb-8">
                 
                 <div class="glass-ui p-6 rounded-lg mb-8">
                     <h3 class="text-xl font-bold text-emerald-400 mb-4">Key Takeaways</h3>
