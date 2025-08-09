@@ -1,13 +1,14 @@
 /**
  * =================================================================
- * EcoGenie - Definitive Application Logic (with new 3D Background)
+ * EcoGenie - Definitive Application Logic (with Borealis 3D Wave)
  * =================================================================
+ * This script has been rebuilt from scratch for maximum reliability and performance.
+ * It features a new, advanced "Borealis Particle Wave" 3D background.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- 1. INITIALIZATION & SETUP ---
 
-    // Object to hold all references to DOM elements for clean access
     const elements = {
         // Navigation & Pages
         navLinks: document.querySelectorAll('.nav-link, .mobile-nav-link'),
@@ -48,11 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         learnArticleView: document.getElementById('learn-article-view'),
         articleListContainer: document.getElementById('article-list-container'),
         
-        // New Feature Elements (assumes a container with this ID exists in your HTML)
+        // New Feature Elements
         impactTrackerContainer: document.getElementById('impact-tracker'), 
     };
 
-    // Centralized state for the entire application, loaded from localStorage
     const state = {
         currentCategory: 'eco',
         history: JSON.parse(localStorage.getItem('ecoGenieHistory')) || [],
@@ -60,10 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
         impactStats: JSON.parse(localStorage.getItem('ecoGenieImpact')) || { analyses: 0, discoveries: 0 },
         discover: { products: [], loaded: false },
         learn: { articles: [], loaded: false },
-        currentAnalysisData: null, // To hold the data of the currently displayed analysis
+        currentAnalysisData: null,
     };
 
-    // --- 2. NEW 3D BACKGROUND ENGINE: "NEURAL PLEXUS" ---
+    // --- 2. NEW 3D BACKGROUND ENGINE: "BOREALIS PARTICLE WAVE" ---
 
     const init3DBackground = () => {
         if (typeof THREE === 'undefined') return;
@@ -72,59 +72,88 @@ document.addEventListener('DOMContentLoaded', () => {
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.z = 50;
+        camera.position.z = 30;
 
-        const points = [];
-        const group = new THREE.Group();
-        scene.add(group);
+        const particleCount = 10000;
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
 
-        const numPoints = 300;
-        const radius = 20;
-        for (let i = 0; i < numPoints; i++) {
-            const x = (Math.random() - 0.5) * radius * 2;
-            const y = (Math.random() - 0.5) * radius * 2;
-            const z = (Math.random() - 0.5) * radius * 2;
-            points.push(new THREE.Vector3(x, y, z));
+        const color = new THREE.Color();
+        const radius = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * radius;
+            positions[i3 + 1] = (Math.random() - 0.5) * radius;
+            positions[i3 + 2] = (Math.random() - 0.5) * radius;
+            
+            color.setHSL(0.5 + Math.random() * 0.2, 0.7, 0.5 + Math.random() * 0.2);
+            colors[i3] = color.r;
+            colors[i3 + 1] = color.g;
+            colors[i3 + 2] = color.b;
+
+            sizes[i] = Math.random() * 2 + 1;
         }
 
-        const pointsGeometry = new THREE.BufferGeometry().setFromPoints(points);
-        const pointsMaterial = new THREE.PointsMaterial({ color: 0x2dd4bf, size: 0.2 });
-        const pointCloud = new THREE.Points(pointsGeometry, pointsMaterial);
-        group.add(pointCloud);
-
-        const linesGeometry = new THREE.BufferGeometry();
-        const positions = [];
-        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
-
-        for (let i = 0; i < numPoints; i++) {
-            for (let j = i + 1; j < numPoints; j++) {
-                const p1 = points[i];
-                const p2 = points[j];
-                const distance = p1.distanceTo(p2);
-
-                if (distance < 4) {
-                    positions.push(p1.x, p1.y, p1.z);
-                    positions.push(p2.x, p2.y, p2.z);
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 1.0 },
+                pointTexture: { value: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/sprites/spark1.png' ) }
+            },
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                    gl_PointSize = size * ( 300.0 / -mvPosition.z );
+                    gl_Position = projectionMatrix * mvPosition;
                 }
-            }
-        }
-        linesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        const lines = new THREE.LineSegments(linesGeometry, lineMaterial);
-        group.add(lines);
+            `,
+            fragmentShader: `
+                uniform sampler2D pointTexture;
+                varying vec3 vColor;
+                void main() {
+                    gl_FragColor = vec4( vColor, 1.0 );
+                    gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+                }
+            `,
+            blending: THREE.AdditiveBlending,
+            depthTest: false,
+            transparent: true
+        });
+
+        const particleSystem = new THREE.Points(geometry, material);
+        scene.add(particleSystem);
 
         const mouse = new THREE.Vector2();
         document.addEventListener('mousemove', (event) => {
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         });
-
+        
         const clock = new THREE.Clock();
         const animate = () => {
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
-
-            group.rotation.y = elapsedTime * 0.1;
-            group.rotation.x = elapsedTime * 0.05;
+            
+            particleSystem.rotation.y = elapsedTime * 0.05;
+            
+            const positions = particleSystem.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                const x = positions[i3];
+                const y = positions[i3 + 1];
+                positions[i3 + 1] = Math.sin(elapsedTime + x * 0.5) * 2.0;
+            }
+            particleSystem.geometry.attributes.position.needsUpdate = true;
 
             camera.position.x += (mouse.x * 5 - camera.position.x) * 0.02;
             camera.position.y += (mouse.y * 5 - camera.position.y) * 0.02;
@@ -142,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- 3. UI & UTILITY FUNCTIONS ---
-
     const togglePanel = (panel, show) => {
         if (show) panel.classList.remove('translate-x-full');
         else panel.classList.add('translate-x-full');
@@ -175,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 4. NAVIGATION & PAGE MANAGEMENT ---
-
     const showPage = (pageId) => {
         elements.pageContents.forEach(page => page.classList.add('hidden'));
         const targetPage = document.getElementById(pageId);
@@ -198,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 5. CORE AI & API LOGIC ---
-
     const fetchFromApi = async (functionName, body) => {
         for (let i = 0; i < 3; i++) {
             try {
@@ -220,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 6. HOME PAGE: PRODUCT ANALYSIS ---
-
     const updateCategory = (category, buttonEl) => {
         state.currentCategory = category;
         const icon = buttonEl.textContent.split(' ')[0];
@@ -299,13 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 7. NEW FEATURE: FAVORITES ---
-
     const isFavorite = (productName) => state.favorites.some(fav => fav.productName === productName);
-
     const toggleFavorite = () => {
         if (!state.currentAnalysisData) return;
         const productName = state.currentAnalysisData.productName;
-
         if (isFavorite(productName)) {
             state.favorites = state.favorites.filter(fav => fav.productName !== productName);
             showNotification("Removed from favorites!");
@@ -318,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 8. NEW FEATURE: IMPACT TRACKER ---
-
     const updateImpactStats = (type) => {
         if (type in state.impactStats) {
             state.impactStats[type]++;
@@ -326,7 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('ecoGenieImpact', JSON.stringify(state.impactStats));
         renderImpactStats();
     };
-
     const renderImpactStats = () => {
         if (elements.impactTrackerContainer) {
             elements.impactTrackerContainer.innerHTML = `
@@ -339,7 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 9. DISCOVER & LEARN PAGES ---
-    
     const loadDiscoverContent = async () => {
         renderLoadingState(elements.discoverGrid, "Discovering products...");
         try {
