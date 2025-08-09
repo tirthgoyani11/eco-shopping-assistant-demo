@@ -71,7 +71,7 @@ exports.handler = async function(event, context) {
 
         switch (action) {
             case 'getArticleList':
-                const topicGeneratorPrompt = `You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas. For each, provide a catchy title, a fictional author, a recent date, and a concise summary. **JSON Output (MUST follow this exactly):** \`\`\`json { "articles": [ { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean.", "image": "https://placehold.co/800x400/16a34a/white?text=Eco+Labels" } ] } \`\`\``;
+                const topicGeneratorPrompt = `You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas. For each, provide a catchy title, a fictional author, a recent date, and a concise summary. For the image, provide a standard placeholder URL. **JSON Output (MUST follow this exactly):** \`\`\`json { "articles": [ { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean.", "image": "https://placehold.co/800x400/16a34a/white?text=Eco+Labels" } ] } \`\`\``;
                 const articleListText = await generateAiText(topicGeneratorPrompt, GEMINI_API_KEY);
                 responseData = extractJson(articleListText);
                 break;
