@@ -195,6 +195,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 6. HOME PAGE: PRODUCT ANALYSIS ---
 
+    const updateCategory = (category, buttonEl) => {
+        state.currentCategory = category;
+        const icon = buttonEl.textContent.split(' ')[0];
+        const text = buttonEl.textContent.split(' ').slice(1).join(' ');
+        elements.categoryDisplay.innerHTML = `<span class="text-xl">${icon}</span> <span class="hidden md:inline">${text}</span>`;
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active', 'border-teal-400');
+            btn.setAttribute('aria-checked', 'false');
+        });
+        buttonEl.classList.add('active', 'border-teal-400');
+        buttonEl.setAttribute('aria-checked', 'true');
+        elements.prodTitleInput.focus();
+    };
+
     const handleAnalysis = async () => {
         const title = elements.prodTitleInput.value.trim();
         if (!title) {
@@ -245,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 class="text-2xl font-bold text-white mb-6 ml-2 reveal reveal-delay-4">${data.recommendations.title}</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${(data.recommendations.items || []).map((item, index) => `
-                        <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${500 + index * 100}ms;">
+                        <div class="reveal recommendation-card tilt-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${500 + index * 100}ms;">
                             <img src="${item.image}" alt="${item.name}" class="w-full h-48 rounded-md mb-4 object-cover" onerror="this.src='https.placehold.co/400x400/1f2937/e5e7eb?text=Image'; this.onerror=null;">
                             <h4 class="font-bold text-white flex-grow">${item.name}</h4>
                             <p class="text-sm text-white/60 my-3 flex-grow">${item.description}</p>
