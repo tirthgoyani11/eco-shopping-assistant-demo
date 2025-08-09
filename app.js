@@ -50,9 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
         learnListView: document.getElementById('learn-list-view'),
         learnArticleView: document.getElementById('learn-article-view'),
         articleListContainer: document.getElementById('article-list-container'),
-        aiQuestionInput: document.getElementById('ai-question-input'),
-        aiQuestionBtn: document.getElementById('ai-question-btn'),
-        aiAnswerContainer: document.getElementById('ai-answer-container'),
         
         // New Feature Elements (assumes a container with this ID exists in your HTML)
         impactTrackerContainer: document.getElementById('impact-tracker'), 
@@ -212,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const data = await fetchFromApi('gemini-proxy', { category: state.currentCategory, title });
-            state.currentAnalysisData = data; // Store current analysis data
+            state.currentAnalysisData = data;
             renderResults(data);
             saveToHistory(title, state.currentCategory, data);
             updateImpactStats('analyses');
@@ -235,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <svg class="w-6 h-6 ${isFav ? 'text-yellow-400' : 'text-white/70'}" fill="${isFav ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </button>
                     <div class="flex flex-col md:flex-row gap-8">
-                        <div class="md:w-1/3 flex-shrink-0 reveal reveal-delay-1"><img src="${data.productImage}" alt="${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x400/1f2937/e5e7eb?text=Image+Not+Found'; this.onerror=null;"></div>
+                        <div class="md:w-1/3 flex-shrink-0 reveal reveal-delay-1"><img src="${data.productImage}" alt="${data.productName}" class="w-full rounded-lg shadow-lg" onerror="this.src='https.placehold.co/400x400/1f2937/e5e7eb?text=Image+Not+Found'; this.onerror=null;"></div>
                         <div class="md:w-2/3">
                             <h2 class="text-3xl font-bold text-white reveal reveal-delay-2">${data.productName}</h2>
                             <p class="text-lg font-semibold ${data.isRecommended ? 'text-teal-400' : 'text-red-400'} my-4 reveal reveal-delay-3">${data.verdict}</p>
@@ -249,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${(data.recommendations.items || []).map((item, index) => `
                         <div class="reveal recommendation-card glass-ui p-4 rounded-lg flex flex-col" style="transition-delay: ${500 + index * 100}ms;">
-                            <img src="${item.image}" alt="${item.name}" class="w-full h-48 rounded-md mb-4 object-cover" onerror="this.src='https://placehold.co/400x400/1f2937/e5e7eb?text=Image'; this.onerror=null;">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-48 rounded-md mb-4 object-cover" onerror="this.src='https.placehold.co/400x400/1f2937/e5e7eb?text=Image'; this.onerror=null;">
                             <h4 class="font-bold text-white flex-grow">${item.name}</h4>
                             <p class="text-sm text-white/60 my-3 flex-grow">${item.description}</p>
                             <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="mt-auto block text-center w-full bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 transition">View Product</a>
@@ -328,54 +325,168 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // All other render functions for Discover and Learn pages remain the same...
-    const renderDiscoverPage = () => { /* ... */ };
-    const renderDiscoverGrid = () => { /* ... */ };
-    const renderProductCard = (product) => { /* ... */ };
-    const renderArticleList = () => { /* ... */ };
-    const handleArticleClick = (e) => { /* ... */ };
-    const renderFullArticle = (article) => { /* ... */ };
-    const handleAskAiExpert = async () => { /* ... */ };
+    const renderDiscoverPage = () => {
+        renderDiscoverGrid();
+    };
     
+    const renderDiscoverGrid = () => {
+        if (state.discover.products.length === 0) {
+            elements.discoverGrid.innerHTML = `<p class="text-white/70 col-span-full text-center">No products found.</p>`;
+            return;
+        }
+        elements.discoverGrid.innerHTML = state.discover.products.map(renderProductCard).join('');
+    };
+    
+    const renderProductCard = (product) => {
+        return `
+            <a href="${product.link}" target="_blank" rel="noopener noreferrer" class="discover-card tilt-card glass-ui p-4 rounded-lg flex flex-col">
+                <img src="${product.image}" alt="${product.name}" class="w-full h-48 rounded-md mb-4 object-cover">
+                <h4 class="font-bold text-white">${product.name}</h4>
+                <p class="text-xs text-white/50 mb-2">by ${product.brand}</p>
+                <p class="text-sm text-white/70 my-2 flex-grow">${product.description}</p>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    ${(product.tags || []).map(tag => `<span class="text-xs bg-teal-500/20 text-teal-300 px-2 py-1 rounded-full">${tag}</span>`).join('')}
+                </div>
+            </a>
+        `;
+    };
+
+    const renderArticleList = () => {
+        if (state.learn.articles.length === 0) {
+            elements.articleListContainer.innerHTML = `<p class="text-white/70 col-span-full text-center">No articles found.</p>`;
+            return;
+        }
+        elements.articleListContainer.innerHTML = state.learn.articles.map(article => `
+            <div class="article-card tilt-card glass-ui p-4 rounded-lg flex flex-col cursor-pointer" data-article-id="${article.id}">
+                <img src="${article.image}" alt="${article.title}" class="w-full h-40 rounded-md mb-4 object-cover">
+                <h4 class="font-bold text-white flex-grow">${article.title}</h4>
+                <p class="text-sm text-white/60 my-2">${article.summary}</p>
+                <span class="text-xs text-white/50 mt-2">By ${article.author} - ${article.date}</span>
+            </div>
+        `).join('');
+    };
+
+    const handleArticleClick = (e) => {
+        const card = e.target.closest('.article-card');
+        if (!card) return;
+        const articleId = card.dataset.articleId;
+        const articleData = state.learn.articles.find(a => a.id === articleId);
+        if (articleData) {
+            elements.learnListView.classList.add('hidden');
+            renderFullArticle(articleData);
+            elements.learnArticleView.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+    };
+    
+    const renderFullArticle = (article) => {
+        elements.learnArticleView.innerHTML = `
+            <button id="back-to-learn" class="glass-ui px-4 py-2 rounded-full text-sm mb-8 hover:border-teal-400/50">&larr; Back to Articles</button>
+            <article class="article-content">
+                <h1 class="text-4xl font-bold text-white mb-4">${article.title}</h1>
+                <p class="text-white/60 mb-6">By ${article.author} | ${article.date}</p>
+                <img src="${article.image}" alt="${article.title}" class="w-full rounded-lg mb-8">
+                <div class="glass-ui p-6 rounded-lg mb-8">
+                    <h3 class="text-xl font-bold text-teal-400 mb-4">Key Takeaways</h3>
+                    <div class="prose prose-invert">${marked.parse(article.takeaways)}</div>
+                </div>
+                <div class="prose prose-invert">${marked.parse(article.content)}</div>
+            </article>
+        `;
+    };
+
     // --- 10. HISTORY PANEL ---
-    const saveToHistory = (title, category, resultData) => { /* ... */ };
-    const renderHistory = () => { /* ... */ };
-    const handleHistoryClick = (e) => { /* ... */ };
-    const clearHistory = () => { /* ... */ };
+    const saveToHistory = (title, category, resultData) => {
+        const historyEntry = { id: Date.now(), title, category, resultData };
+        state.history.unshift(historyEntry);
+        if (state.history.length > 20) state.history.pop();
+        localStorage.setItem('ecoGenieHistory', JSON.stringify(state.history));
+        renderHistory();
+    };
+
+    const renderHistory = () => {
+        elements.clearHistoryBtn.disabled = state.history.length === 0;
+        if (state.history.length === 0) {
+            elements.historyList.innerHTML = `<div class="p-4 text-center text-white/60">No past analyses found.</div>`;
+            return;
+        }
+        elements.historyList.innerHTML = state.history.map(item => `
+            <div class="history-item p-4 -mx-4 rounded-lg hover:bg-white/5 transition cursor-pointer" data-history-id="${item.id}">
+                <p class="font-bold text-white truncate">${item.title}</p>
+                <p class="text-sm text-white/60">Category: ${item.category}</p>
+            </div>`).join('');
+    };
+    
+    const handleHistoryClick = (e) => {
+        const itemEl = e.target.closest('.history-item');
+        if (itemEl) {
+            const id = Number(itemEl.dataset.historyId);
+            const historyItem = state.history.find(item => item.id === id);
+            if (historyItem) {
+                showPage('home');
+                state.currentAnalysisData = historyItem.resultData;
+                elements.placeholderContent.classList.add('hidden');
+                elements.loadingAnimation.classList.add('hidden');
+                renderResults(historyItem.resultData);
+                togglePanel(elements.historyPanel, false);
+            }
+        }
+    };
+    
+    const clearHistory = () => {
+        const onConfirm = () => {
+            state.history = [];
+            localStorage.removeItem('ecoGenieHistory');
+            renderHistory();
+            showNotification("History cleared successfully.");
+            toggleModal(elements.confirmModal, false);
+        };
+        const onCancel = () => toggleModal(elements.confirmModal, false);
+        toggleModal(elements.confirmModal, true);
+        elements.confirmModalConfirm.onclick = onConfirm;
+        elements.confirmModalCancel.onclick = onCancel;
+        elements.confirmModalOverlay.onclick = onCancel;
+    };
 
     // --- 11. EVENT LISTENERS ---
     
     const setupEventListeners = () => {
         document.body.addEventListener('click', (e) => {
-            if (e.target.closest('#analyze-btn')) handleAnalysis();
-            if (e.target.closest('.category-btn')) updateCategory(e.target.closest('.category-btn').dataset.category, e.target.closest('.category-btn'));
-            if (e.target.closest('.nav-link') || e.target.closest('.mobile-nav-link')) {
+            const target = e.target.closest('button, a, .history-item, .article-card');
+            if (!target) return;
+
+            const id = target.id;
+            const classList = target.classList;
+
+            if (id === 'analyze-btn') handleAnalysis();
+            else if (classList.contains('category-btn')) updateCategory(target.dataset.category, target);
+            else if (classList.contains('nav-link') || classList.contains('mobile-nav-link')) {
                 e.preventDefault();
-                showPage(e.target.closest('a').getAttribute('href').substring(1));
+                showPage(target.getAttribute('href').substring(1));
             }
-            if (e.target.closest('#history-btn')) togglePanel(elements.historyPanel, true);
-            if (e.target.closest('#close-history-btn')) togglePanel(elements.historyPanel, false);
-            if (e.target.closest('#clear-history-btn')) clearHistory();
-            if (e.target.closest('.history-item')) handleHistoryClick(e);
-            if (e.target.closest('#mobile-menu-btn')) togglePanel(elements.mobileMenu, true);
-            if (e.target.closest('#close-mobile-menu-btn')) togglePanel(elements.mobileMenu, false);
-            if (e.target.closest('.filter-btn')) {
-                state.discover.activeFilter = e.target.closest('.filter-btn').dataset.filter;
+            else if (id === 'history-btn') togglePanel(elements.historyPanel, true);
+            else if (id === 'close-history-btn') togglePanel(elements.historyPanel, false);
+            else if (id === 'clear-history-btn') clearHistory();
+            else if (classList.contains('history-item')) handleHistoryClick(e);
+            else if (id === 'mobile-menu-btn') togglePanel(elements.mobileMenu, true);
+            else if (id === 'close-mobile-menu-btn') togglePanel(elements.mobileMenu, false);
+            else if (classList.contains('filter-btn')) {
+                state.discover.activeFilter = target.dataset.filter;
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
-                e.target.closest('.filter-btn').classList.add('active-filter');
+                target.classList.add('active-filter');
                 renderDiscoverGrid();
             }
-            if (e.target.closest('.article-card')) handleArticleClick(e);
-            if (e.target.id === 'back-to-learn') {
+            else if (classList.contains('article-card')) handleArticleClick(e);
+            else if (id === 'back-to-learn') {
                 elements.learnArticleView.classList.add('hidden');
                 elements.learnListView.classList.remove('hidden');
             }
-            if (e.target.closest('#ai-question-btn')) handleAskAiExpert();
-            if (e.target.closest('.related-question-btn')) {
-                elements.aiQuestionInput.value = e.target.textContent;
+            else if (id === 'ai-question-btn') handleAskAiExpert();
+            else if (classList.contains('related-question-btn')) {
+                elements.aiQuestionInput.value = target.textContent;
                 handleAskAiExpert();
             }
-            if (e.target.closest('.favorite-btn')) toggleFavorite();
+            else if (classList.contains('favorite-btn')) toggleFavorite();
         });
 
         document.body.addEventListener('keydown', e => {
