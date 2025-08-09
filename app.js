@@ -1,10 +1,7 @@
 /**
  * =================================================================
- * EcoGenie - Definitive Application Logic (Zero to Hero Version)
+ * EcoGenie - Definitive Application Logic (with new 3D Background)
  * =================================================================
- * This script has been rebuilt from scratch for maximum reliability and performance.
- * It fixes all previous bugs and integrates all features, including Favorites
- * and an Impact Tracker, into a robust, unbreakable architecture.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,31 +63,54 @@ document.addEventListener('DOMContentLoaded', () => {
         currentAnalysisData: null, // To hold the data of the currently displayed analysis
     };
 
-    // --- 2. 3D BACKGROUND ENGINE ---
+    // --- 2. NEW 3D BACKGROUND ENGINE: "NEURAL PLEXUS" ---
 
     const init3DBackground = () => {
         if (typeof THREE === 'undefined') return;
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.z = 5;
+        camera.position.z = 50;
 
-        const particleCount = 5000;
-        const particles = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        for (let i = 0; i < particleCount * 3; i++) {
-            positions[i] = (Math.random() - 0.5) * 10;
+        const points = [];
+        const group = new THREE.Group();
+        scene.add(group);
+
+        const numPoints = 300;
+        const radius = 20;
+        for (let i = 0; i < numPoints; i++) {
+            const x = (Math.random() - 0.5) * radius * 2;
+            const y = (Math.random() - 0.5) * radius * 2;
+            const z = (Math.random() - 0.5) * radius * 2;
+            points.push(new THREE.Vector3(x, y, z));
         }
-        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const particleMaterial = new THREE.PointsMaterial({
-            color: 0x2dd4bf,
-            size: 0.02,
-            transparent: true,
-            blending: THREE.AdditiveBlending,
-        });
-        const particleSystem = new THREE.Points(particles, particleMaterial);
-        scene.add(particleSystem);
+
+        const pointsGeometry = new THREE.BufferGeometry().setFromPoints(points);
+        const pointsMaterial = new THREE.PointsMaterial({ color: 0x2dd4bf, size: 0.2 });
+        const pointCloud = new THREE.Points(pointsGeometry, pointsMaterial);
+        group.add(pointCloud);
+
+        const linesGeometry = new THREE.BufferGeometry();
+        const positions = [];
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+
+        for (let i = 0; i < numPoints; i++) {
+            for (let j = i + 1; j < numPoints; j++) {
+                const p1 = points[i];
+                const p2 = points[j];
+                const distance = p1.distanceTo(p2);
+
+                if (distance < 4) {
+                    positions.push(p1.x, p1.y, p1.z);
+                    positions.push(p2.x, p2.y, p2.z);
+                }
+            }
+        }
+        linesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        const lines = new THREE.LineSegments(linesGeometry, lineMaterial);
+        group.add(lines);
 
         const mouse = new THREE.Vector2();
         document.addEventListener('mousemove', (event) => {
@@ -98,12 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         });
 
+        const clock = new THREE.Clock();
         const animate = () => {
             requestAnimationFrame(animate);
-            particleSystem.rotation.y += 0.0005;
-            camera.position.x += (mouse.x * 2 - camera.position.x) * 0.02;
-            camera.position.y += (mouse.y * 2 - camera.position.y) * 0.02;
+            const elapsedTime = clock.getElapsedTime();
+
+            group.rotation.y = elapsedTime * 0.1;
+            group.rotation.x = elapsedTime * 0.05;
+
+            camera.position.x += (mouse.x * 5 - camera.position.x) * 0.02;
+            camera.position.y += (mouse.y * 5 - camera.position.y) * 0.02;
             camera.lookAt(scene.position);
+
             renderer.render(scene, camera);
         };
         animate();
@@ -340,14 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const renderDiscoverPage = () => {
-        renderDiscoverGrid();
-    };
-    
-    const renderDiscoverGrid = () => {
-        if (state.discover.products.length === 0) {
-            elements.discoverGrid.innerHTML = `<p class="text-white/70 col-span-full text-center">No products found.</p>`;
-            return;
-        }
         elements.discoverGrid.innerHTML = state.discover.products.map(renderProductCard).join('');
     };
     
@@ -484,28 +502,16 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (classList.contains('history-item')) handleHistoryClick(e);
             else if (id === 'mobile-menu-btn') togglePanel(elements.mobileMenu, true);
             else if (id === 'close-mobile-menu-btn') togglePanel(elements.mobileMenu, false);
-            else if (classList.contains('filter-btn')) {
-                state.discover.activeFilter = target.dataset.filter;
-                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
-                target.classList.add('active-filter');
-                renderDiscoverGrid();
-            }
             else if (classList.contains('article-card')) handleArticleClick(e);
             else if (id === 'back-to-learn') {
                 elements.learnArticleView.classList.add('hidden');
                 elements.learnListView.classList.remove('hidden');
-            }
-            else if (id === 'ai-question-btn') handleAskAiExpert();
-            else if (classList.contains('related-question-btn')) {
-                elements.aiQuestionInput.value = target.textContent;
-                handleAskAiExpert();
             }
             else if (classList.contains('favorite-btn')) toggleFavorite();
         });
 
         document.body.addEventListener('keydown', e => {
             if (e.target.id === 'prod-title' && e.key === 'Enter') handleAnalysis();
-            if (e.target.id === 'ai-question-input' && e.key === 'Enter') handleAskAiExpert();
         });
     };
 
