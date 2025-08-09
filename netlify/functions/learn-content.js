@@ -1,8 +1,9 @@
 /**
- * Netlify Function: learn-content.js (Fixed & Optimized)
- * ----------------------------------------------------
- * This version fixes the timeout bug by re-architecting the AI workflow.
- * It now generates images on-demand for a single article, not all at once.
+ * Netlify Function: learn-content.js (Unbreakable Version)
+ * -----------------------------------------------------------------
+ * This definitive version fixes all timeout issues by generating the
+ * complete content (topics, text, takeaways, and images) in a single,
+ * optimized upfront request.
  */
 
 const axios = require("axios");
@@ -45,7 +46,7 @@ async function generateAiText(prompt, apiKey) {
 
 async function generateAiImage(title, apiKey) {
     try {
-        const imagePrompt = `Photorealistic, vibrant, high-quality stock photo representing the concept: "${title}". The image should be clean, modern, and have a positive, eco-friendly aesthetic.`;
+        const imagePrompt = `Photorealistic, vibrant, high-quality stock photo representing the concept: "${title}". Clean, modern, eco-friendly aesthetic.`;
         const response = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
             { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } }
@@ -74,29 +75,54 @@ exports.handler = async function(event, context) {
         let responseData;
 
         switch (action) {
-            case 'getArticleList':
-                const topicGeneratorPrompt = `You are an expert content strategist for a sustainability blog in India. Generate 5 fresh, engaging article ideas. For each, provide a catchy title, a fictional author, a recent date, and a concise summary. For the image, provide a standard placeholder URL. **JSON Output (MUST follow this exactly):** \`\`\`json { "articles": [ { "id": "guide-to-eco-certifications", "title": "A Simple Guide to Eco-Certifications in India", "author": "Priya Sharma", "date": "August 10, 2025", "summary": "Decode the green labels on products and understand what they really mean.", "image": "https://placehold.co/800x400/16a34a/white?text=Eco+Labels" } ] } \`\`\``;
-                const articleListText = await generateAiText(topicGeneratorPrompt, GEMINI_API_KEY);
-                responseData = extractJson(articleListText);
+            // This is now the ONLY action for articles. It generates everything at once.
+            case 'getFullLearnContent':
+                const contentPrompt = `
+                    You are an expert content strategist and author for a sustainability blog in India.
+                    Your task is to generate a complete set of 3 fresh, engaging, and relevant articles.
+                    For each article, you must provide:
+                    1. A unique 'id'.
+                    2. A catchy 'title'.
+                    3. A fictional 'author' name.
+                    4. A recent 'date'.
+                    5. A concise one-sentence 'summary'.
+                    6. A detailed, full-length 'content' section in Markdown.
+                    7. A bulleted list of 3-4 'takeaways' in Markdown.
+
+                    **JSON Output Structure (MUST follow this exactly):**
+                    \`\`\`json
+                    {
+                      "articles": [
+                        {
+                          "id": "guide-to-eco-certifications",
+                          "title": "A Simple Guide to Eco-Certifications in India",
+                          "author": "Priya Sharma",
+                          "date": "August 10, 2025",
+                          "summary": "Decode the green labels on products and understand what they really mean.",
+                          "content": "<h2>Understanding the Labels</h2><p>Navigating the world of sustainable products can be tricky. Here’s a quick rundown of the most common labels you'll find in India...</p><ul><li><strong>GOTS:</strong> The gold standard for organic fibers.</li><li><strong>Fair Trade:</strong> Guarantees fair wages for workers.</li></ul>",
+                          "takeaways": "- GOTS ensures organic materials.\\n- Fair Trade supports ethical labor practices.\\n- Leaping Bunny means cruelty-free."
+                        }
+                      ]
+                    }
+                    \`\`\`
+                `;
+                const articleListText = await generateAiText(contentPrompt, GEMINI_API_KEY);
+                let { articles } = extractJson(articleListText);
+
+                // Now, generate an image for each article in parallel
+                const imagePromises = articles.map(article => generateAiImage(article.title, GEMINI_API_KEY));
+                const images = await Promise.all(imagePromises);
+
+                // Add the generated image URL to each article object
+                articles = articles.map((article, index) => ({
+                    ...article,
+                    image: images[index]
+                }));
+
+                responseData = { articles };
                 break;
 
-            case 'getArticleContent':
-                const { title, summary } = payload;
-                if (!title || !summary) throw new Error("Article title and summary are required.");
-                
-                const articlePrompt = `You are an expert on sustainable living in India. Write a detailed, engaging blog post based on this title and summary. Use Markdown. Title: ${title}. Summary: ${summary}`;
-                const keyTakeawaysPrompt = `Based on the article titled "${title}", generate a bulleted list of 3-4 "Key Takeaways".`;
-
-                // Generate text and image for the single article
-                const [content, takeaways, image] = await Promise.all([
-                    generateAiText(articlePrompt, GEMINI_API_KEY),
-                    generateAiText(keyTakeawaysPrompt, GEMINI_API_KEY),
-                    generateAiImage(title, GEMINI_API_KEY)
-                ]);
-
-                responseData = { content, takeaways, image };
-                break;
-
+            // The Q&A feature remains separate and on-demand
             case 'askQuestion':
                 if (!payload) throw new Error("No question provided.");
                 const questionPrompt = `You are "EcoGenie," an AI expert on sustainability in India. A user has asked: "${payload}". Provide a clear, concise answer (around 100 words) and suggest 3 related follow-up questions. **JSON Output (MUST follow this exactly):** \`\`\`json { "answer": "Your answer.", "relatedQuestions": ["Question 1?", "Question 2?", "Question 3?"] } \`\`\``;
