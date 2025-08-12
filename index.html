@@ -170,8 +170,8 @@
 
         // --- MODULE: ai.js (CORRECTED) ---
         async function getProductInfo(imageBase64) {
-            const apiKey = "AIzaSyCdBFIzpAfPfk7tW9IUOSihKU20XmuyrGA"; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview:generateContent?key=${apiKey}`;
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const prompt = `Execute the 10-layer SCOUT bot algorithm.
 1.  **Scan & Specify:** Analyze the image to identify the product's name, brand, and key attributes.
 2.  **Categorize & Compare:** First, determine if the product is 'Food' or 'Non-Food'.
