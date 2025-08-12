@@ -17,21 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const scannerStatusEl = document.getElementById('scanner-status');
     const uploadBtn = document.getElementById('upload-btn');
     const imageUploadInput = document.getElementById('image-upload-input');
+    const visionText = document.querySelector('.ai-vision-text');
     let impactChartInstance;
 
     // --- Navigation ---
     function showPage(pageId) {
-        // Stop the camera if navigating away from the home page
         if (pageId !== 'home') {
             stopCamera();
         }
 
-        // Hide all pages and update navigation button states
         Object.values(pages).forEach(page => page.classList.remove('active'));
         pages[pageId]?.classList.add('active');
         navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
 
-        // Perform actions specific to the new page
         if (pageId === 'home') {
             setTimeout(() => startCamera(cameraFeedEl, scannerStatusEl), 100);
         } else if (pageId === 'favorites') {
@@ -48,9 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    navButtons.forEach(button => {
-        button.addEventListener('click', () => showPage(button.dataset.page));
-    });
+    navButtons.forEach(button => button.addEventListener('click', () => showPage(button.dataset.page)));
 
     // --- Core App Logic ---
     async function analyzeImage(imageData) {
@@ -58,31 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
             scannerStatusEl.textContent = "Failed to capture image.";
             return;
         }
-        scannerStatusEl.textContent = `Analyzing...`;
-        stopCamera();
         
-        // Get analysis from the AI module
+        scannerStatusEl.textContent = `Analyzing...`;
+        visionText.textContent = 'ANALYZING...';
+        scannerContainer.classList.add('is-analyzing');
+        
         const productInfo = await getProductInfo(imageData);
         
-        // Render the results on the results page
+        scannerContainer.classList.remove('is-analyzing');
+        visionText.textContent = 'TAP TO SCAN';
         renderResults(pages.results, productInfo);
         showPage('results');
     }
     
-    // Handle tap on the AI Vision scanner
     scannerContainer.addEventListener('click', () => {
         const imageData = captureFrame(cameraFeedEl);
         analyzeImage(imageData);
     });
 
-    // Handle file upload
     uploadBtn.addEventListener('click', () => imageUploadInput.click());
     imageUploadInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                // Get the base64 string, removing the data URI prefix
                 const imageData = e.target.result.split(',')[1];
                 analyzeImage(imageData);
             };
@@ -92,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     function init() {
-        console.log("EcoSnap App Initialized (v1.5)");
+        console.log("EcoSnap App Initialized");
         showPage('home');
     }
 
