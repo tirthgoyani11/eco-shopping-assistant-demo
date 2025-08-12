@@ -1,157 +1,302 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
+    <!-- Meta Information -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoGenie - Your AI Sustainability Analyst</title>
-    <meta name="description" content="EcoGenie: Your AI-powered analyst for sustainability. Get instant analysis, discover eco-friendly products, and learn about conscious living.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EcoSnap - Sustainable Shopping Assistant</title>
+    <meta name="description" content="Scan products to instantly see their eco-score, carbon footprint, and find sustainable alternatives.">
+
+    <!-- PWA & Mobile Experience (Meta tags for native feel) -->
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- External Libraries -->
+    <!-- Core Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Link to your custom stylesheet -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="antialiased">
-    <!-- Canvas for the 3D background -->
-    <canvas id="bg-canvas"></canvas>
+    <!-- INLINED CSS -->
+    <style>
+        /* --- theme.css --- */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
 
-    <div class="relative min-h-screen flex flex-col">
-        <!-- Header with Logo and Navigation -->
-        <header class="w-full p-4 flex justify-between items-center flex-shrink-0 glass-ui sticky top-0 z-40">
-            <a href="#home" class="flex items-center gap-3 nav-link" aria-label="EcoGenie Home">
-                <svg class="w-10 h-10 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.186m-1.5.186a6.01 6.01 0 01-1.5-.186m3.75 7.373a9.04 9.04 0 01-3.75 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-xl font-bold text-white">EcoGenie</span>
-            </a>
-            <nav class="hidden md:flex items-center gap-6">
-                <a href="#home" class="nav-link text-white/70 hover:text-white transition">Analyze</a>
-                <a href="#discover" class="nav-link text-white/70 hover:text-white transition">Discover</a>
-                <a href="#learn" class="nav-link text-white/70 hover:text-white transition">Learn</a>
-            </nav>
-            <div class="flex items-center gap-2">
-                <button id="history-btn" aria-label="View Analysis History" aria-controls="history-panel" class="control-btn p-2 rounded-full bg-white/5 transition">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </button>
-                <button id="mobile-menu-btn" class="md:hidden control-btn p-2 rounded-full bg-white/5 transition" aria-label="Open menu" aria-controls="mobile-menu">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-                </button>
-            </div>
-        </header>
+        :root {
+            --bg-color: #030712; /* Dark background */
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-color: #22c55e;
+            --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
 
-        <!-- Main Content Area where pages will be rendered -->
-        <main id="main-content" class="flex-grow">
-            <!-- Home Page Content -->
-            <div id="home" class="page-content">
-                 <div class="container mx-auto p-4 md:p-6 flex flex-col items-center text-center">
-                    <h1 class="text-4xl md:text-5xl font-extrabold text-white mt-8">Your AI Sustainability Analyst</h1>
-                    <p class="text-white/60 mt-2 max-w-2xl">Get instant analysis of any product, discover eco-friendly alternatives, and learn how to make more conscious choices.</p>
-                    <div class="w-full max-w-2xl mx-auto my-8">
-                        <div id="command-bar" role="search" class="command-bar glass-ui p-2 rounded-full flex items-center gap-2">
-                            <div id="category-display" class="flex-shrink-0 flex items-center gap-2 pl-3 text-white/80"></div>
-                            <input type="text" id="prod-title" class="command-input text-lg" placeholder="Analyze a product...">
-                            <button id="analyze-btn" aria-label="Analyze Product" class="flex-shrink-0 w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center hover:bg-teal-600 transition-transform active:scale-95">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </button>
-                        </div>
-                        <div id="category-selector" role="radiogroup" class="flex justify-center gap-3 mt-4">
-                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition" role="radio" data-category="eco">🌿 Eco-Friendly</button>
-                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition" role="radio" data-category="food">🍎 Healthy Food</button>
-                            <button class="category-btn glass-ui px-4 py-2 rounded-full text-sm transition" role="radio" data-category="cosmetic">💄 Cosmetics</button>
-                        </div>
-                    </div>
-                    <section id="result-container" aria-live="polite" class="w-full max-w-5xl">
-                        <div id="placeholder-content" class="flex h-full justify-center items-center py-20">
-                            <p class="text-white/60 text-lg text-center">Your detailed analysis will appear here.</p>
-                        </div>
-                        <div id="loading-animation" class="hidden loader-container py-20">
-                            <div class="glitch-text" data-text="Waking the Genie..."></div>
-                            <p class="text-white/50">The genie is thinking...</p>
-                        </div>
-                        <div id="result-content" class="hidden"></div>
-                    </section>
-                </div>
-            </div>
-
-            <!-- Discover Page Content -->
-            <div id="discover" class="page-content hidden">
-                <div class="container mx-auto p-4 md:p-6">
-                    <h1 class="text-4xl font-bold text-white text-center my-8">Discover Sustainable Products</h1>
-                    <div id="discover-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style="perspective: 1000px;"></div>
-                </div>
-            </div>
-
-            <!-- Learn Page Content -->
-            <div id="learn" class="page-content hidden">
-                <div class="container mx-auto p-4 md:p-6">
-                    <div id="learn-list-view">
-                        <h1 class="text-4xl font-bold text-white text-center my-8">The Learning Hub</h1>
-                        <div id="article-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style="perspective: 1000px;"></div>
-                    </div>
-                    <div id="learn-article-view" class="hidden max-w-4xl mx-auto"></div>
-                </div>
-            </div>
-        </main>
+        body {
+            font-family: var(--font-family-system), 'Nunito Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         
-        <!-- Footer -->
-        <footer class="w-full text-center p-4 mt-auto flex-shrink-0">
-            <div id="impact-tracker" class="text-sm text-white/50 mb-2">
-                <!-- Stats will be rendered here by app.js -->
-            </div>
-            <p class="text-sm text-white/40">&copy; 2025 EcoGenie. All rights reserved.</p>
-        </footer>
-    </div>
-    
-    <!-- Panels and Modals -->
-    <aside id="history-panel" class="fixed top-0 right-0 h-full w-full max-w-md glass-ui p-6 transform translate-x-full z-50 overflow-y-auto flex flex-col">
-        <div class="flex justify-between items-center mb-6 flex-shrink-0">
-            <h2 class="text-2xl font-bold text-white">Analysis History</h2>
-            <button id="close-history-btn" class="p-2 rounded-full hover:bg-white/10 transition" aria-label="Close history panel">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <div id="history-list" class="flex-grow overflow-y-auto -mr-4 pr-4"></div>
-        <div class="mt-4 flex-shrink-0">
-            <button id="clear-history-btn" class="w-full text-center bg-red-600/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600/70 transition disabled:opacity-50">Clear History</button>
-        </div>
-    </aside>
+        /* --- Aurora Background --- */
+        .aurora-background {
+            position: relative;
+            overflow: hidden;
+        }
+        .aurora {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(58, 129, 214, 0.25) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 30%, rgba(90, 217, 128, 0.25) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(189, 70, 231, 0.25) 0%, transparent 50%);
+            animation: aurora-flow 20s linear infinite;
+            background-size: 200% 200%;
+            z-index: 0;
+        }
+        @keyframes aurora-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-    <div id="mobile-menu" class="fixed top-0 right-0 h-full w-full max-w-xs glass-ui p-6 transform translate-x-full z-50 flex flex-col">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-xl font-bold text-white">Menu</h2>
-            <button id="close-mobile-menu-btn" class="p-2 rounded-full hover:bg-white/10 transition" aria-label="Close menu">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <nav class="flex flex-col gap-4">
-            <a href="#home" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Analyze</a>
-            <a href="#discover" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Discover</a>
-            <a href="#learn" class="mobile-nav-link text-lg text-white/80 hover:text-white transition">Learn</a>
+
+        /* --- style.css --- */
+        .page {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .nav-button {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 0.25rem; font-size: 0.75rem; font-weight: 600;
+            color: var(--text-secondary);
+            transition: color 0.3s ease, transform 0.2s ease;
+            padding: 0.5rem;
+        }
+        .nav-button.active {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+        .nav-button:active { transform: scale(0.95); }
+
+        /* --- AI Vision Scanner --- */
+        #scanner-container {
+            cursor: pointer; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            background-color: #000;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #camera-feed {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.15;
+            transform: scaleX(-1);
+        }
+        .ai-vision-pulse {
+            width: 70%; padding-bottom: 70%;
+            border: 3px solid var(--accent-color);
+            border-radius: 50%; position: absolute;
+            animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5), inset 0 0 25px rgba(34, 197, 94, 0.3);
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .ai-vision-text {
+            position: absolute; color: white; font-weight: 700;
+            letter-spacing: 0.2em; font-size: 0.8rem;
+            background: rgba(0,0,0,0.3); padding: 4px 10px;
+            border-radius: 6px; z-index: 10;
+        }
+        
+        /* --- General UI --- */
+        .glass-card {
+            background: rgba(31, 41, 55, 0.5); /* Darker glass */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        .card-3d-wrapper { perspective: 1200px; }
+        .product-card {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-style: preserve-3d;
+        }
+        .card-3d-wrapper:hover .product-card {
+            transform: rotateY(3deg) rotateX(5deg) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+        }
+        .badge {
+            font-size: 0.8rem; font-weight: 700;
+            padding: 0.3rem 0.8rem; border-radius: 9999px;
+        }
+        .favorite-btn svg { transition: fill 0.3s ease, transform 0.3s ease; }
+        .favorite-btn:hover svg { fill: #ef4444; transform: scale(1.1); }
+    </style>
+</head>
+<body class="aurora-background">
+
+    <div id="app-container" class="max-w-md mx-auto min-h-screen flex flex-col relative">
+        <div class="aurora"></div>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-grow p-6 z-10">
+            
+            <section id="page-home" class="page active">
+                <header>
+                    <h1 class="text-4xl font-bold">EcoSnap</h1>
+                    <p class="text-gray-400">Your sustainable shopping assistant.</p>
+                </header>
+                <div class="flex flex-col items-center justify-center h-full gap-8">
+                    <div id="scanner-container" class="aspect-square w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+                        <video id="camera-feed" playsinline autoplay muted></video>
+                        <div class="ai-vision-pulse"></div>
+                        <div class="ai-vision-text">TAP TO ANALYZE</div>
+                    </div>
+                    <div class="text-center">
+                        <p id="scanner-status" class="text-gray-400 mb-4 h-6">Ready to scan</p>
+                         <input type="file" id="image-upload-input" class="hidden" accept="image/*">
+                        <button id="upload-btn" class="bg-gray-800/80 backdrop-blur-sm shadow-md rounded-full py-3 px-6 font-semibold flex items-center gap-2 text-white border border-gray-700">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Upload Photo
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-results" class="page"></section>
+            <section id="page-favorites" class="page"></section>
+            <section id="page-impact" class="page"></section>
+            <section id="page-learn" class="page"></section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bg-gray-900/60 backdrop-blur-lg border-t border-gray-700/80 rounded-t-3xl p-2 sticky bottom-0 z-20">
+            <div class="flex justify-around">
+                <button class="nav-button active" data-page="home" aria-label="Home"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span>Home</span></button>
+                <button class="nav-button" data-page="favorites" aria-label="Favorites"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg><span>Favorites</span></button>
+                <button class="nav-button" data-page="impact" aria-label="Impact Tracker"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg><span>Impact</span></button>
+                <button class="nav-button" data-page="learn" aria-label="Learning Hub"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg><span>Learn</span></button>
+            </div>
         </nav>
     </div>
 
-    <div id="confirm-modal-overlay" class="fixed inset-0 bg-black/60 z-50 hidden"></div>
-    <div id="confirm-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm glass-ui p-6 rounded-2xl z-50 hidden">
-        <h3 id="confirm-modal-title" class="text-lg font-bold text-white mb-4">Are you sure?</h3>
-        <p id="confirm-modal-text" class="text-white/80 mb-6">This action will permanently delete your analysis history.</p>
-        <div class="flex justify-end gap-4">
-            <button id="confirm-modal-cancel" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Cancel</button>
-            <button id="confirm-modal-confirm" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">Confirm</button>
-        </div>
-    </div>
+    <!-- INLINED JAVASCRIPT -->
+    <script type="module">
+        // --- ai.js ---
+        const mockData = {
+            product: { name: 'Organic Almond Milk', brand: 'EcoBrand Naturals', image: 'https://placehold.co/400x300/a3e635/4d7c0f?text=Almond+Milk', ecoScore: 'A', carbonFootprint: 1.2, badges: ['🌿 Organic', '♻️ Recyclable', '🐰 Cruelty-Free'], alternatives: [{ name: 'Oat Milk Powder', description: 'Just add water, less waste.', image: 'https://placehold.co/100x100/f0abfc/a21caf?text=Oat+Powder' }] },
+            favorites: [{ name: 'Oat Milk Powder', image: 'https://placehold.co/100x100/f0abfc/a21caf?text=Oat+Powder', ecoScore: 'A' }, { name: 'Bamboo Toothbrush', image: 'https://placehold.co/100x100/67e8f9/0e7490?text=Toothbrush', ecoScore: 'A' }],
+            impact: { scanned: 12, plasticSaved: 3, choices: { excellent: 5, good: 4, poor: 3 } },
+            learning: [{ title: 'Did you know?', content: 'Reducing plastic use by just one bottle a week can save over 1,200 bottles from landfills in your lifetime.', gradient: 'from-green-400 to-blue-500' }, { title: 'Quick Tip', content: 'Opting for products with minimal packaging significantly reduces your carbon footprint.', gradient: 'from-purple-400 to-pink-500' }]
+        };
+        function getProductInfo(barcode) { return new Promise(resolve => setTimeout(() => resolve(mockData.product), 500)); }
+        function getFavorites() { return mockData.favorites; }
+        function getImpactData() { return mockData.impact; }
+        function getLearningTips() { return mockData.learning; }
 
-    <div id="notification-modal" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-teal-500 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transform translate-y-10 pointer-events-none">
-        <p id="notification-message"></p>
-    </div>
+        // --- camera.js ---
+        let cameraStream;
+        async function startCamera(videoEl) {
+            if (cameraStream || !videoEl) return;
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                videoEl.srcObject = cameraStream;
+            } catch (err) {
+                console.error("Camera access denied:", err);
+                document.getElementById('scanner-status').textContent = "Camera access denied.";
+            }
+        }
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+        }
 
-    <script src="app.js"></script>
+        // --- app.js ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const pages = { home: document.getElementById('page-home'), results: document.getElementById('page-results'), favorites: document.getElementById('page-favorites'), impact: document.getElementById('page-impact'), learn: document.getElementById('page-learn') };
+            const navButtons = document.querySelectorAll('.nav-button');
+            const scannerContainer = document.getElementById('scanner-container');
+            const cameraFeedEl = document.getElementById('camera-feed');
+            const scannerStatusEl = document.getElementById('scanner-status');
+            const uploadBtn = document.getElementById('upload-btn');
+            const imageUploadInput = document.getElementById('image-upload-input');
+            let impactChartInstance;
+
+            function showPage(pageId) {
+                if (pageId !== 'home') stopCamera();
+                Object.values(pages).forEach(page => page.classList.remove('active'));
+                pages[pageId]?.classList.add('active');
+                navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
+
+                if (pageId === 'home') setTimeout(() => startCamera(cameraFeedEl), 100);
+                else if (pageId === 'favorites') renderFavorites();
+                else if (pageId === 'impact') renderImpact();
+                else if (pageId === 'learn') renderLearningHub();
+            }
+
+            navButtons.forEach(button => button.addEventListener('click', () => showPage(button.dataset.page)));
+
+            async function handleScan() {
+                scannerStatusEl.textContent = `Analyzing...`;
+                stopCamera();
+                const productInfo = await getProductInfo("simulated-scan");
+                renderResults(productInfo);
+                showPage('results');
+            }
+            
+            scannerContainer.addEventListener('click', handleScan);
+
+            function renderResults(product) {
+                pages.results.innerHTML = `<div class="results-content space-y-6"><div class="card-3d-wrapper"><div class="glass-card product-card p-4"><img src="${product.image}" alt="${product.name}" class="rounded-2xl w-full h-48 object-cover mb-4"><h2 class="text-2xl font-bold">${product.name}</h2><p class="text-gray-400">${product.brand}</p></div></div><div class="grid grid-cols-2 gap-4"><div class="glass-card p-4 text-center"><h3 class="font-bold text-gray-400 text-sm">Eco Score</h3><p class="text-5xl font-extrabold text-green-400">${product.ecoScore}</p></div><div class="glass-card p-4 text-center"><h3 class="font-bold text-gray-400 text-sm">Carbon Footprint</h3><p class="text-3xl font-bold">${product.carbonFootprint} <span class="text-lg text-gray-500">kg CO₂</span></p></div></div><div class="glass-card p-4"><h3 class="font-bold mb-3">Materials & Badges</h3><div class="flex flex-wrap gap-2">${product.badges.map(badge => `<span class="badge bg-gray-700 text-gray-200">${badge}</span>`).join('')}</div></div><div><h3 class="text-xl font-bold mb-3">Eco-Friendly Alternatives</h3><div class="space-y-3">${product.alternatives.map(alt => `<article class="glass-card p-3 flex items-center gap-4"><img src="${alt.image}" class="w-16 h-16 rounded-xl object-cover"><div class="flex-grow"><p class="font-bold">${alt.name}</p><p class="text-sm text-gray-400">${alt.description}</p></div><button class="favorite-btn text-gray-600 hover:text-red-500 transition-colors" aria-label="Add to favorites"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></article>`).join('')}</div></div></div>`;
+            }
+            
+            function renderFavorites() {
+                const favorites = getFavorites();
+                pages.favorites.innerHTML = `<h2 class="text-3xl font-bold mb-6">Favorites</h2><div id="favorites-list" class="space-y-4">${favorites.length > 0 ? favorites.map(item => `<article class="glass-card p-3 flex items-center gap-4"><img src="${item.image}" class="w-16 h-16 rounded-xl object-cover"><div class="flex-grow"><p class="font-bold">${item.name}</p><div class="flex gap-2 mt-1"><span class="badge-sm bg-green-900 text-green-300">Eco: ${item.ecoScore}</span></div></div></article>`).join('') : '<p class="text-center text-gray-500">Your saved items will appear here.</p>'}</div>`;
+            }
+
+            function renderImpact() {
+                const data = getImpactData();
+                pages.impact.innerHTML = `<h2 class="text-3xl font-bold mb-6">Your Impact</h2><div class="grid grid-cols-1 gap-4"><div class="glass-card p-4"><h3 class="font-bold mb-2">Sustainable Choices</h3><canvas id="impact-chart"></canvas></div><div class="grid grid-cols-2 gap-4"><div class="glass-card p-4"><h3 class="font-bold">Items Scanned</h3><p class="text-4xl font-bold text-green-400">${data.scanned}</p></div><div class="glass-card p-4"><h3 class="font-bold">Plastic Saved</h3><p class="text-4xl font-bold text-blue-400">${data.plasticSaved}<span class="text-lg"> items</span></p></div></div></div>`;
+                const ctx = document.getElementById('impact-chart').getContext('2d');
+                if (impactChartInstance) impactChartInstance.destroy();
+                Chart.defaults.color = '#9ca3af';
+                impactChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['Excellent', 'Good', 'Poor'], datasets: [{ data: [data.choices.excellent, data.choices.good, data.choices.poor], backgroundColor: ['#22c55e', '#84cc16', '#ef4444'], borderColor: '#1f2937', borderWidth: 4 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } } });
+            }
+
+            function renderLearningHub() {
+                const tips = getLearningTips();
+                pages.learn.innerHTML = `<h2 class="text-3xl font-bold mb-6">Learning Hub</h2><div id="learning-carousel" class="space-y-4">${tips.map(card => `<article class="bg-gradient-to-br ${card.gradient} text-white rounded-2xl p-6 shadow-lg"><h3 class="text-xl font-bold mb-2">${card.title}</h3><p>${card.content}</p></article>`).join('')}</div>`;
+            }
+
+            uploadBtn.addEventListener('click', () => imageUploadInput.click());
+            imageUploadInput.addEventListener('change', async (event) => {
+                if (event.target.files[0]) {
+                    scannerStatusEl.textContent = `Processing ${event.target.files[0].name}...`;
+                    const productInfo = await getProductInfo('uploaded-image');
+                    renderResults(productInfo);
+                    showPage('results');
+                }
+            });
+
+            showPage('home');
+        });
+    </script>
 </body>
 </html>
