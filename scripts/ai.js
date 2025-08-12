@@ -1,93 +1,42 @@
 /**
- * Analyzes a product image using the Gemini API with the advanced SCOUT Bot algorithm.
+ * Calls the secure Netlify serverless function to analyze an image.
  * @param {string} imageBase64 - The base64-encoded image data.
- * @returns {Promise<object>} A promise that resolves with the structured product data from the AI.
+ * @returns {Promise<object>} A promise that resolves with the full analysis from the backend.
  */
 export async function getProductInfo(imageBase64) {
-    console.log("Sending image to Gemini for analysis...");
-
-    // The 'apiKey' is intentionally left blank. In a secure environment like this,
-    // it will be automatically and safely provided when the API call is made.
-    const apiKey = ""; 
-    
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-    // This is the final, 10-layer SCOUT Bot prompt.
-    const prompt = `Execute the 10-layer SCOUT bot algorithm.
-1.  **Scan & Specify:** Analyze the image to identify the product's name, brand, and key attributes.
-2.  **Categorize & Compare:** First, determine if the product is 'Food' or 'Non-Food'.
-3.  **Optimize & Order:** Find ONE best alternative. If 'Food', find a healthier alternative. If 'Non-Food', find a low-carbon alternative.
-4.  **Identify Alternative Type:** Classify this best alternative as 'Commercial Product' or 'Home-made Remedy/DIY'.
-5.  **Uncover & Link (Commercial):** If commercial, attempt to find a specific, direct product purchase link on Amazon.in.
-6.  **Navigate & Search (Fallback):** If no direct link, provide a 'search_query' for Google Shopping.
-7.  **Generate & Instruct (Recipe/DIY):** If it's a home-made remedy or DIY, provide a short 'recipe' (for food) or 'diy_instructions' (for non-food) as an array of strings.
-8.  **Generalize & Guide:** ALWAYS provide a second, separate 'general_alternative' which is a non-purchase, lifestyle suggestion.
-9.  **Verify & Validate:** Ensure all outputs are logical and relevant.
-10. **Transmit & Tell:** Return a single JSON object with the results.`;
-
-    const responseSchema = { 
-        type: "OBJECT", 
-        properties: { 
-            "name": { "type": "STRING" }, 
-            "brand": { "type": "STRING" }, 
-            "product_category": { "type": "STRING", "enum": ["Food", "Non-Food"] }, 
-            "ecoScore": { "type": "STRING" }, 
-            "carbonFootprint": { "type": "NUMBER" }, 
-            "health_analysis": { 
-                "type": "OBJECT", 
-                "properties": { 
-                    "rating": { "type": "STRING" }, 
-                    "health_concern": { "type": "STRING" }, 
-                    "sufficient_intake": { "type": "STRING" } 
-                } 
-            }, 
-            "alternatives": { 
-                "type": "ARRAY", 
-                "items": { 
-                    "type": "OBJECT", 
-                    "properties": { 
-                        "name": { "type": "STRING" }, 
-                        "reason": { "type": "STRING" }, 
-                        "link": { "type": "STRING" }, 
-                        "search_query": { "type": "STRING" }, 
-                        "recipe": { "type": "ARRAY", "items": { "type": "STRING" } }, 
-                        "diy_instructions": { "type": "ARRAY", "items": { "type": "STRING" } } 
-                    } 
-                } 
-            } 
-        }, 
-        required: ["name", "brand", "product_category"] 
-    };
-
-    const payload = { 
-        contents: [{ 
-            parts: [
-                { text: prompt }, 
-                { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }
-            ] 
-        }], 
-        generationConfig: { 
-            responseMimeType: "application/json", 
-            responseSchema: responseSchema 
-        } 
-    };
+    // This is the standard endpoint for a Netlify function named 'gemini-proxy'.
+    const functionUrl = '/.netlify/functions/gemini-proxy';
 
     try {
-        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (!response.ok) throw new Error(`API call failed with status: ${response.status}`);
-        const result = await response.json();
-        if (result.candidates && result.candidates.length > 0) {
-            const productData = JSON.parse(result.candidates[0].content.parts[0].text);
-            productData.image = `data:image/jpeg;base64,${imageBase64}`;
-            return productData;
-        } else { 
-            throw new Error("No valid response from Gemini."); 
+        const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // The body now sends the image data to your serverless function.
+            body: JSON.stringify({ image: imageBase64 })
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("Backend function error:", errorBody);
+            throw new Error(`Backend function failed with status: ${response.status}`);
         }
-    } catch (error) { 
-        console.error("Error fetching from Gemini API:", error); 
-        return { name: 'Analysis Failed', brand: 'Please try again', image: `data:image/jpeg;base64,${imageBase64}`, product_category: 'Unknown' }; 
+        
+        const productData = await response.json();
+        // Add the user's uploaded image to the final result for display
+        productData.image = `data:image/jpeg;base64,${imageBase64}`;
+        return productData;
+
+    } catch (error) {
+        console.error("Error calling Netlify function:", error);
+        return { 
+            name: 'Analysis Failed', 
+            brand: 'Could not connect to the AI bot.', 
+            image: `data:image/jpeg;base64,${imageBase64}`, 
+            product_category: 'Unknown' 
+        };
     }
 }
+
 
 // --- MOCK DATA FOR OTHER FEATURES ---
 const mockData = { 
