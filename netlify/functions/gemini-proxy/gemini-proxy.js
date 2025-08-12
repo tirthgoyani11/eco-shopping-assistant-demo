@@ -27,11 +27,7 @@ async function generateAiText(prompt, apiKey) {
 
 // --- The Advanced "Titan Scout Bot" ---
 async function titanScoutBot(productName, serperApiKey, geminiApiKey) {
-    // --- Layer 1: Direct E-commerce Scraping (Highest Reliability) ---
-    // This layer would ideally use a robust scraping library like Cheerio or Puppeteer if the environment supported it.
-    // For a serverless function, we simulate this by prioritizing known e-commerce domains from search results.
-
-    // --- Layer 2: Price Comparison Scout (Find the best price) ---
+    // --- Layer 1: Price Comparison Scout (Find the best price) ---
     try {
         const shoppingResponse = await axios.post('https://google.serper.dev/shopping', 
             { q: `${productName}`, gl: 'in' },
@@ -58,29 +54,18 @@ async function titanScoutBot(productName, serperApiKey, geminiApiKey) {
             };
         }
     } catch (error) {
-        console.warn(`Titan Scout Bot Layer 2 (Price Comparison) failed for "${productName}". Moving to Layer 3.`);
+        console.warn(`Titan Scout Bot Layer 1 (Price Comparison) failed for "${productName}".`);
     }
 
-    // --- Layer 3: AI Link Validation (New!) ---
+    // --- Layer 2: AI Link Validation ---
     try {
         const searchResponse = await axios.post('https://google.serper.dev/search', 
             { q: `${productName} buy online`, gl: 'in' },
             { headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' } }
         );
-        const potentialLinks = searchResponse.data.organic.slice(0, 3).map(r => r.link); // Check top 3 links
+        const potentialLinks = searchResponse.data.organic.slice(0, 3).map(r => r.link);
 
-        const validationPrompt = `
-            You are an AI link validator. Analyze the following URLs and determine which one is the most likely to be a direct product page (not a category page, search result, or article).
-
-            **JSON Output Structure (MUST follow this exactly):**
-            \`\`\`json
-            {
-              "best_link": "https://example.com/product-page" 
-            }
-            \`\`\`
-            --- URLS TO ANALYZE ---
-            ${JSON.stringify(potentialLinks)}
-        `;
+        const validationPrompt = `You are an AI link validator. Analyze the following URLs and determine which one is the most likely to be a direct product page (not a category page, search result, or article). **JSON Output Structure (MUST follow this exactly):** \`\`\`json { "best_link": "https://example.com/product-page" } \`\`\` --- URLS TO ANALYZE --- ${JSON.stringify(potentialLinks)}`;
         const validationResponse = await generateAiText(validationPrompt, geminiApiKey);
         const validatedResult = JSON.parse(validationResponse.replace(/```json/g, "").replace(/```/g, "").trim());
 
@@ -98,33 +83,10 @@ async function titanScoutBot(productName, serperApiKey, geminiApiKey) {
             };
         }
     } catch (error) {
-        console.warn(`Titan Scout Bot Layer 3 (AI Link Validation) failed for "${productName}". Moving to Layer 4.`);
+        console.warn(`Titan Scout Bot Layer 2 (AI Link Validation) failed for "${productName}".`);
     }
 
-    // --- Layer 4: AI-Powered Amazon Scout ---
-    try {
-        const imageResponse = await axios.post('https://google.serper.dev/images', 
-            { q: `${productName} product photo`, gl: 'in' },
-            { headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' } }
-        );
-        const imageResult = imageResponse.data.images.find(img => img.imageUrl);
-        const imageUrl = imageResult ? imageResult.imageUrl : `https://placehold.co/600x400/334155/white?text=${encodeURIComponent(productName)}`;
-
-        const linkGenPrompt = `You are an intelligent shopping assistant. Generate a compelling description and a relevant Amazon search link for: "${productName}". **JSON Output Structure (MUST follow this exactly):** \`\`\`json { "description": "Your short description with emojis.", "amazon_link": "Your generated Amazon search URL." } \`\`\``;
-        const aiResponseText = await generateAiText(linkGenPrompt, geminiApiKey);
-        const aiResult = JSON.parse(aiResponseText.replace(/```json/g, "").replace(/```/g, "").trim());
-
-        return {
-            name: productName,
-            image: imageUrl,
-            link: aiResult.amazon_link,
-            description: aiResult.description
-        };
-    } catch (error) {
-        console.error(`Titan Scout Bot Layer 4 (AI Amazon) failed for "${productName}". Moving to Fallback.`);
-    }
-
-    // --- Layer 5: Fallback Scout ---
+    // --- Layer 3 & 4 (Fallback) ---
     return {
         name: productName,
         image: `https://placehold.co/600x400/334155/white?text=Not+Found`,
@@ -139,23 +101,21 @@ exports.handler = async function(event) {
     if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
 
     try {
-        const body = JSON.parse(event.body || "{}");
-        const { category, title } = body;
+        const { title, category } = JSON.parse(event.body || "{}");
         if (!title || !category) return { statusCode: 400, body: JSON.stringify({ error: "Title and category are required." }) };
 
         const { GEMINI_API_KEY, SERPER_API_KEY } = process.env;
         if (!GEMINI_API_KEY || !SERPER_API_KEY) throw new Error("API keys are not configured.");
 
-        // --- Step 1: The AI Analyst (with Eco Score) ---
+        // --- Step 1: The AI Analyst ---
         const analystPrompt = `You are a senior sustainability analyst for a global market with expertise in India. Analyze a user's product and provide a comprehensive eco-assessment. **JSON Output Structure (MUST follow this exactly):** \`\`\`json { "productName": "User's Product Name", "isRecommended": false, "verdict": "A short, clear verdict.", "ecoScore": { "score": 25, "title": "Poor", "justification": "Made from virgin plastic with excessive non-recyclable packaging." }, "summary": "A detailed analysis in Markdown format.", "recommendationsTitle": "Better, Eco-Friendly Alternatives", "scoutKeywords": ["Stainless Steel Water Bottle", "Glass Water Bottle", "Handmade Copper Water Vessel"] } \`\`\` --- USER INPUT --- Category: ${category}, Title: ${title}`;
         const analystResponseText = await generateAiText(analystPrompt, GEMINI_API_KEY);
         const analystResult = JSON.parse(analystResponseText.replace(/```json/g, "").replace(/```/g, "").trim());
 
-        // --- Step 2: Fetch Main Product Image using the Titan Scout Bot ---
+        // --- Step 2: Fetch Main Product Image ---
         const mainProductData = await titanScoutBot(analystResult.productName, SERPER_API_KEY, GEMINI_API_KEY);
-        const productImage = mainProductData.image;
-
-        // --- Step 3: Run the Titan Scout Bot for all recommendations in parallel ---
+        
+        // --- Step 3: Run Scout Bot for recommendations ---
         const recommendationPromises = (analystResult.scoutKeywords || []).map(keyword => 
             titanScoutBot(keyword, SERPER_API_KEY, GEMINI_API_KEY)
         );
@@ -164,7 +124,7 @@ exports.handler = async function(event) {
         // --- Final Assembly ---
         const finalResponse = {
             ...analystResult,
-            productImage: productImage,
+            productImage: mainProductData.image,
             recommendations: {
                 title: analystResult.recommendationsTitle,
                 items: finalItems,
