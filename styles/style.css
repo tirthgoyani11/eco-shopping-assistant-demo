@@ -1,0 +1,127 @@
+/* --- Core Theme & Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
+
+:root {
+    --bg-color: #030712; /* Dark background */
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --accent-color: #22c55e;
+    --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+body {
+    font-family: var(--font-family-system), 'Nunito Sans', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Aurora Background --- */
+.aurora-background {
+    position: relative;
+    overflow: hidden;
+}
+.aurora {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: 
+        radial-gradient(ellipse at 20% 80%, rgba(58, 129, 214, 0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 30%, rgba(90, 217, 128, 0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(189, 70, 231, 0.25) 0%, transparent 50%);
+    animation: aurora-flow 20s linear infinite;
+    background-size: 200% 200%;
+    z-index: 0;
+}
+@keyframes aurora-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* --- Page Transitions --- */
+.page {
+    display: none;
+    height: 100%;
+    overflow-y: auto;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* --- Navigation --- */
+.nav-button {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0.25rem; font-size: 0.75rem; font-weight: 600;
+    color: var(--text-secondary);
+    transition: color 0.3s ease, transform 0.2s ease;
+    padding: 0.5rem;
+}
+.nav-button.active {
+    color: var(--accent-color);
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+.nav-button:active { transform: scale(0.95); }
+
+/* --- AI Vision Scanner --- */
+#scanner-container {
+    cursor: pointer; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    background-color: #000;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+#camera-feed {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; opacity: 0.15;
+    transform: scaleX(-1);
+}
+.ai-vision-pulse {
+    width: 70%; padding-bottom: 70%;
+    border: 3px solid var(--accent-color);
+    border-radius: 50%; position: absolute;
+    animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.5), inset 0 0 25px rgba(34, 197, 94, 0.3);
+}
+@keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.4); opacity: 0; }
+}
+.ai-vision-text {
+    position: absolute; color: white; font-weight: 700;
+    letter-spacing: 0.2em; font-size: 0.8rem;
+    background: rgba(0,0,0,0.3); padding: 4px 10px;
+    border-radius: 6px; z-index: 10;
+}
+
+/* --- UI Elements: Cards, Badges --- */
+.glass-card {
+    background: rgba(31, 41, 55, 0.5); /* Darker glass */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+}
+.card-3d-wrapper { perspective: 1200px; }
+.product-card {
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-style: preserve-3d;
+}
+.card-3d-wrapper:hover .product-card {
+    transform: rotateY(3deg) rotateX(5deg) scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+}
+.badge {
+    font-size: 0.8rem; font-weight: 700;
+    padding: 0.3rem 0.8rem; border-radius: 9999px;
+}
+.favorite-btn svg { transition: fill 0.3s ease, transform 0.3s ease; }
+.favorite-btn:hover svg { fill: #ef4444; transform: scale(1.1); }
