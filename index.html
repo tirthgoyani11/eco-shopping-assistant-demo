@@ -168,7 +168,7 @@
         function renderImpact(pageElement, impactData) { const chartId = `impact-chart-${Date.now()}`; pageElement.innerHTML = `<h2 class="text-3xl font-bold mb-6">Your Impact</h2><div class="grid grid-cols-1 gap-4"><div class="glass-card p-4"><h3 class="font-bold mb-2">Sustainable Choices</h3><canvas id="${chartId}"></canvas></div><div class="grid grid-cols-2 gap-4"><div class="glass-card p-4"><h3 class="font-bold">Items Scanned</h3><p class="text-4xl font-bold text-green-400">${impactData.scanned}</p></div><div class="glass-card p-4"><h3 class="font-bold">Plastic Saved</h3><p class="text-4xl font-bold text-blue-400">${impactData.plasticSaved}<span class="text-lg"> items</span></p></div></div></div>`; return chartId; }
         function renderLearningHub(pageElement, learningData) { pageElement.innerHTML = `<h2 class="text-3xl font-bold mb-6">Learning Hub</h2><div id="learning-carousel" class="space-y-4">${learningData.map(card => `<article class="bg-gradient-to-br ${card.gradient} text-white rounded-2xl p-6 shadow-lg"><h3 class="text-xl font-bold mb-2">${card.title}</h3><p>${card.content}</p></article>`).join('')}</div>`; }
 
-        // --- MODULE: ai.js ---
+        // --- MODULE: ai.js (CORRECTED) ---
         async function getProductInfo(imageBase64) {
             const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
