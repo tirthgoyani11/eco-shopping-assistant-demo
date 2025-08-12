@@ -4,157 +4,29 @@
     <!-- Meta Information -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>EcoSnap - Sustainable Shopping Assistant</title>
-    <meta name="description" content="Scan products to instantly see their eco-score, carbon footprint, and find sustainable alternatives.">
+    <title>EcoSnap - Health & Eco Assistant</title>
+    <meta name="description" content="Scan products to instantly see their eco-score, health analysis, and find sustainable alternatives.">
 
-    <!-- PWA & Mobile Experience (Meta tags for native feel) -->
+    <!-- PWA & Mobile Experience -->
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
     
     <!-- Core Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- INLINED CSS -->
-    <style>
-        /* --- theme.css --- */
-        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
-
-        :root {
-            --bg-color: #030712; /* Dark background */
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --accent-color: #22c55e;
-            --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        }
-
-        body {
-            font-family: var(--font-family-system), 'Nunito Sans', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        /* --- Aurora Background --- */
-        .aurora-background {
-            position: relative;
-            overflow: hidden;
-        }
-        .aurora {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: 
-                radial-gradient(ellipse at 20% 80%, rgba(58, 129, 214, 0.25) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 30%, rgba(90, 217, 128, 0.25) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(189, 70, 231, 0.25) 0%, transparent 50%);
-            animation: aurora-flow 20s linear infinite;
-            background-size: 200% 200%;
-            z-index: 0;
-        }
-        @keyframes aurora-flow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-
-        /* --- style.css --- */
-        .page {
-            display: none;
-            height: 100%;
-            overflow-y: auto;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .nav-button {
-            display: flex; flex-direction: column; align-items: center;
-            gap: 0.25rem; font-size: 0.75rem; font-weight: 600;
-            color: var(--text-secondary);
-            transition: color 0.3s ease, transform 0.2s ease;
-            padding: 0.5rem;
-        }
-        .nav-button.active {
-            color: var(--accent-color);
-            text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-        }
-        .nav-button:active { transform: scale(0.95); }
-
-        /* --- AI Vision Scanner --- */
-        #scanner-container {
-            cursor: pointer; position: relative;
-            display: flex; align-items: center; justify-content: center;
-            background-color: #000;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        #camera-feed {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover; opacity: 0.15;
-            transform: scaleX(-1);
-        }
-        .ai-vision-pulse {
-            width: 70%; padding-bottom: 70%;
-            border: 3px solid var(--accent-color);
-            border-radius: 50%; position: absolute;
-            animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
-            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5), inset 0 0 25px rgba(34, 197, 94, 0.3);
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.9); opacity: 0.8; }
-            100% { transform: scale(1.4); opacity: 0; }
-        }
-        .ai-vision-text {
-            position: absolute; color: white; font-weight: 700;
-            letter-spacing: 0.2em; font-size: 0.8rem;
-            background: rgba(0,0,0,0.3); padding: 4px 10px;
-            border-radius: 6px; z-index: 10;
-        }
-        
-        /* --- General UI --- */
-        .glass-card {
-            background: rgba(31, 41, 55, 0.5); /* Darker glass */
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
-        }
-        .card-3d-wrapper { perspective: 1200px; }
-        .product-card {
-            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            transform-style: preserve-3d;
-        }
-        .card-3d-wrapper:hover .product-card {
-            transform: rotateY(3deg) rotateX(5deg) scale(1.02);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
-        }
-        .badge {
-            font-size: 0.8rem; font-weight: 700;
-            padding: 0.3rem 0.8rem; border-radius: 9999px;
-        }
-        .favorite-btn svg { transition: fill 0.3s ease, transform 0.3s ease; }
-        .favorite-btn:hover svg { fill: #ef4444; transform: scale(1.1); }
-    </style>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style/theme.css">
+    <link rel="stylesheet" href="style/style.css">
 </head>
 <body class="aurora-background">
 
-    <div id="app-container" class="max-w-md mx-auto min-h-screen flex flex-col relative">
+    <div id="app-container" class="max-w-md mx-auto h-screen flex flex-col relative">
         <div class="aurora"></div>
 
-        <!-- Main Content Area -->
         <main id="main-content" class="flex-grow p-6 z-10">
-            
             <section id="page-home" class="page active">
                 <header>
                     <h1 class="text-4xl font-bold">EcoSnap</h1>
@@ -163,8 +35,11 @@
                 <div class="flex flex-col items-center justify-center h-full gap-8">
                     <div id="scanner-container" class="aspect-square w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
                         <video id="camera-feed" playsinline autoplay muted></video>
-                        <div class="ai-vision-pulse"></div>
-                        <div class="ai-vision-text">TAP TO ANALYZE</div>
+                        <div class="scan-line"></div>
+                        <div class="analyzing-overlay">
+                            <div class="analyzing-pulse"></div>
+                        </div>
+                        <div class="ai-vision-text">TAP TO SCAN</div>
                     </div>
                     <div class="text-center">
                         <p id="scanner-status" class="text-gray-400 mb-4 h-6">Ready to scan</p>
@@ -183,7 +58,6 @@
             <section id="page-learn" class="page"></section>
         </main>
 
-        <!-- Bottom Navigation Bar -->
         <nav class="bg-gray-900/60 backdrop-blur-lg border-t border-gray-700/80 rounded-t-3xl p-2 sticky bottom-0 z-20">
             <div class="flex justify-around">
                 <button class="nav-button active" data-page="home" aria-label="Home"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span>Home</span></button>
@@ -194,109 +68,6 @@
         </nav>
     </div>
 
-    <!-- INLINED JAVASCRIPT -->
-    <script type="module">
-        // --- ai.js ---
-        const mockData = {
-            product: { name: 'Organic Almond Milk', brand: 'EcoBrand Naturals', image: 'https://placehold.co/400x300/a3e635/4d7c0f?text=Almond+Milk', ecoScore: 'A', carbonFootprint: 1.2, badges: ['🌿 Organic', '♻️ Recyclable', '🐰 Cruelty-Free'], alternatives: [{ name: 'Oat Milk Powder', description: 'Just add water, less waste.', image: 'https://placehold.co/100x100/f0abfc/a21caf?text=Oat+Powder' }] },
-            favorites: [{ name: 'Oat Milk Powder', image: 'https://placehold.co/100x100/f0abfc/a21caf?text=Oat+Powder', ecoScore: 'A' }, { name: 'Bamboo Toothbrush', image: 'https://placehold.co/100x100/67e8f9/0e7490?text=Toothbrush', ecoScore: 'A' }],
-            impact: { scanned: 12, plasticSaved: 3, choices: { excellent: 5, good: 4, poor: 3 } },
-            learning: [{ title: 'Did you know?', content: 'Reducing plastic use by just one bottle a week can save over 1,200 bottles from landfills in your lifetime.', gradient: 'from-green-400 to-blue-500' }, { title: 'Quick Tip', content: 'Opting for products with minimal packaging significantly reduces your carbon footprint.', gradient: 'from-purple-400 to-pink-500' }]
-        };
-        function getProductInfo(barcode) { return new Promise(resolve => setTimeout(() => resolve(mockData.product), 500)); }
-        function getFavorites() { return mockData.favorites; }
-        function getImpactData() { return mockData.impact; }
-        function getLearningTips() { return mockData.learning; }
-
-        // --- camera.js ---
-        let cameraStream;
-        async function startCamera(videoEl) {
-            if (cameraStream || !videoEl) return;
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                videoEl.srcObject = cameraStream;
-            } catch (err) {
-                console.error("Camera access denied:", err);
-                document.getElementById('scanner-status').textContent = "Camera access denied.";
-            }
-        }
-        function stopCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-        }
-
-        // --- app.js ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const pages = { home: document.getElementById('page-home'), results: document.getElementById('page-results'), favorites: document.getElementById('page-favorites'), impact: document.getElementById('page-impact'), learn: document.getElementById('page-learn') };
-            const navButtons = document.querySelectorAll('.nav-button');
-            const scannerContainer = document.getElementById('scanner-container');
-            const cameraFeedEl = document.getElementById('camera-feed');
-            const scannerStatusEl = document.getElementById('scanner-status');
-            const uploadBtn = document.getElementById('upload-btn');
-            const imageUploadInput = document.getElementById('image-upload-input');
-            let impactChartInstance;
-
-            function showPage(pageId) {
-                if (pageId !== 'home') stopCamera();
-                Object.values(pages).forEach(page => page.classList.remove('active'));
-                pages[pageId]?.classList.add('active');
-                navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
-
-                if (pageId === 'home') setTimeout(() => startCamera(cameraFeedEl), 100);
-                else if (pageId === 'favorites') renderFavorites();
-                else if (pageId === 'impact') renderImpact();
-                else if (pageId === 'learn') renderLearningHub();
-            }
-
-            navButtons.forEach(button => button.addEventListener('click', () => showPage(button.dataset.page)));
-
-            async function handleScan() {
-                scannerStatusEl.textContent = `Analyzing...`;
-                stopCamera();
-                const productInfo = await getProductInfo("simulated-scan");
-                renderResults(productInfo);
-                showPage('results');
-            }
-            
-            scannerContainer.addEventListener('click', handleScan);
-
-            function renderResults(product) {
-                pages.results.innerHTML = `<div class="results-content space-y-6"><div class="card-3d-wrapper"><div class="glass-card product-card p-4"><img src="${product.image}" alt="${product.name}" class="rounded-2xl w-full h-48 object-cover mb-4"><h2 class="text-2xl font-bold">${product.name}</h2><p class="text-gray-400">${product.brand}</p></div></div><div class="grid grid-cols-2 gap-4"><div class="glass-card p-4 text-center"><h3 class="font-bold text-gray-400 text-sm">Eco Score</h3><p class="text-5xl font-extrabold text-green-400">${product.ecoScore}</p></div><div class="glass-card p-4 text-center"><h3 class="font-bold text-gray-400 text-sm">Carbon Footprint</h3><p class="text-3xl font-bold">${product.carbonFootprint} <span class="text-lg text-gray-500">kg CO₂</span></p></div></div><div class="glass-card p-4"><h3 class="font-bold mb-3">Materials & Badges</h3><div class="flex flex-wrap gap-2">${product.badges.map(badge => `<span class="badge bg-gray-700 text-gray-200">${badge}</span>`).join('')}</div></div><div><h3 class="text-xl font-bold mb-3">Eco-Friendly Alternatives</h3><div class="space-y-3">${product.alternatives.map(alt => `<article class="glass-card p-3 flex items-center gap-4"><img src="${alt.image}" class="w-16 h-16 rounded-xl object-cover"><div class="flex-grow"><p class="font-bold">${alt.name}</p><p class="text-sm text-gray-400">${alt.description}</p></div><button class="favorite-btn text-gray-600 hover:text-red-500 transition-colors" aria-label="Add to favorites"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></article>`).join('')}</div></div></div>`;
-            }
-            
-            function renderFavorites() {
-                const favorites = getFavorites();
-                pages.favorites.innerHTML = `<h2 class="text-3xl font-bold mb-6">Favorites</h2><div id="favorites-list" class="space-y-4">${favorites.length > 0 ? favorites.map(item => `<article class="glass-card p-3 flex items-center gap-4"><img src="${item.image}" class="w-16 h-16 rounded-xl object-cover"><div class="flex-grow"><p class="font-bold">${item.name}</p><div class="flex gap-2 mt-1"><span class="badge-sm bg-green-900 text-green-300">Eco: ${item.ecoScore}</span></div></div></article>`).join('') : '<p class="text-center text-gray-500">Your saved items will appear here.</p>'}</div>`;
-            }
-
-            function renderImpact() {
-                const data = getImpactData();
-                pages.impact.innerHTML = `<h2 class="text-3xl font-bold mb-6">Your Impact</h2><div class="grid grid-cols-1 gap-4"><div class="glass-card p-4"><h3 class="font-bold mb-2">Sustainable Choices</h3><canvas id="impact-chart"></canvas></div><div class="grid grid-cols-2 gap-4"><div class="glass-card p-4"><h3 class="font-bold">Items Scanned</h3><p class="text-4xl font-bold text-green-400">${data.scanned}</p></div><div class="glass-card p-4"><h3 class="font-bold">Plastic Saved</h3><p class="text-4xl font-bold text-blue-400">${data.plasticSaved}<span class="text-lg"> items</span></p></div></div></div>`;
-                const ctx = document.getElementById('impact-chart').getContext('2d');
-                if (impactChartInstance) impactChartInstance.destroy();
-                Chart.defaults.color = '#9ca3af';
-                impactChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['Excellent', 'Good', 'Poor'], datasets: [{ data: [data.choices.excellent, data.choices.good, data.choices.poor], backgroundColor: ['#22c55e', '#84cc16', '#ef4444'], borderColor: '#1f2937', borderWidth: 4 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } } });
-            }
-
-            function renderLearningHub() {
-                const tips = getLearningTips();
-                pages.learn.innerHTML = `<h2 class="text-3xl font-bold mb-6">Learning Hub</h2><div id="learning-carousel" class="space-y-4">${tips.map(card => `<article class="bg-gradient-to-br ${card.gradient} text-white rounded-2xl p-6 shadow-lg"><h3 class="text-xl font-bold mb-2">${card.title}</h3><p>${card.content}</p></article>`).join('')}</div>`;
-            }
-
-            uploadBtn.addEventListener('click', () => imageUploadInput.click());
-            imageUploadInput.addEventListener('change', async (event) => {
-                if (event.target.files[0]) {
-                    scannerStatusEl.textContent = `Processing ${event.target.files[0].name}...`;
-                    const productInfo = await getProductInfo('uploaded-image');
-                    renderResults(productInfo);
-                    showPage('results');
-                }
-            });
-
-            showPage('home');
-        });
-    </script>
+    <script src="scripts/app.js" type="module"></script>
 </body>
 </html>
