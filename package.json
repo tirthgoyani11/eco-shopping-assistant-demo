@@ -1,10 +1,8 @@
 {
-  "name": "eco-jinner-universal-function",
-  "version": "8.0.0",
-  "description": "The definitive serverless backend for the Eco Jinner Universal Analyst.",
-  "main": "gemini-proxy.js",
-  "license": "MIT",
+  "name": "ecosnap-netlify-backend",
+  "version": "1.0.0",
+  "description": "Backend function for EcoSnap",
   "dependencies": {
-    "axios": "^1.7.2"
+    "node-fetch": "^2.7.0"
   }
 }
