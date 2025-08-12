@@ -1,0 +1,42 @@
+/* --- Core Theme & Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
+
+:root {
+    --bg-color: #030712; /* Dark background */
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --accent-color: #22c55e;
+    
+    /* System Font Stack for a native feel on every device */
+    --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+body {
+    font-family: var(--font-family-system), 'Nunito Sans', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Aurora Background --- */
+.aurora-background {
+    position: relative;
+    overflow: hidden;
+}
+.aurora {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: 
+        radial-gradient(ellipse at 20% 80%, rgba(58, 129, 214, 0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 30%, rgba(90, 217, 128, 0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(189, 70, 231, 0.25) 0%, transparent 50%);
+    animation: aurora-flow 20s linear infinite;
+    background-size: 200% 200%;
+    z-index: 0;
+}
+@keyframes aurora-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
