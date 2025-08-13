@@ -1,8 +1,0 @@
-{
-  "name": "ecosnap-netlify-backend",
-  "version": "1.0.0",
-  "description": "Backend function for EcoSnap",
-  "dependencies": {
-    "node-fetch": "^2.7.0"
-  }
-}
